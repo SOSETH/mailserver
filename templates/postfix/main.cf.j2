@@ -68,6 +68,9 @@ smtpd_tls_ask_ccert = yes
 # Add header that tells if and how the connection was encrypted
 smtpd_tls_received_header = yes
 
+# Announce TLS to everybody
+smtpd_tls_security_level = may
+
 # Configure supported cipher suites
 smtpd_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
 smtp_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
@@ -150,6 +153,7 @@ smtpd_sender_restrictions = reject_sender_login_mismatch,
 # smtp destination restrictions
 # Either you're authenticated OR you are from 127.0.0.1 OR you satisfy a boatload of constraints
 # We need to find out in prod if this is too restrictive
+# Also note that the same thing ist in master.cf without sasl restrictions
 smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated,
   permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
   reject_non_fqdn_recipient, reject_non_fqdn_sender, reject_unknown_sender_domain,

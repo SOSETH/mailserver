@@ -1,0 +1,55 @@
+---
+  - name: Set work dir
+    set_fact:
+      workdir: "/tmp/amtls_{{ ansible_hostname }}"
+    changed_when: False
+      
+  - name: Ensure work dir exists
+    local_action: file dest="{{ workdir }}" state=directory
+    changed_when: False
+    
+  - name: Check if DH parameters exist
+    stat: path="/etc/postfix/dh-1024.pem"
+    register: dhfile
+    changed_when: False
+
+  - name: Generate DH parameters locally
+    local_action: command openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item }}.pem" {{ item }}
+    when: not dhfile.stat.exists
+    with_items:
+      - 1024
+      - 2048
+
+  - name: Copy DH parameters to server
+    copy: src="{{ workdir }}/dh-{{ item }}.pem" dest="/etc/postfix/dh-{{ item }}.pem" owner=root group=postfix mode=0640
+    when: not dhfile.stat.exists
+    with_items:
+      - 1024
+      - 2048
+      
+  - name: Remove local copy of DH parameters
+    file: path={{ workdir }}/dh-{{ item }}.pem state=absent
+    when: not dhfile.stat.exists
+    with_items:
+      - 1024
+      - 2048
+      
+  - name: Check if SSL certificate exists
+    become: True
+    stat: path=/etc/postfix/server.pem
+    register: certstat
+    changed_when: False
+    
+  - name: Copy dummy certificate
+    become: True
+    copy: src=dummycert.pem dest=/etc/postfix/server.pem owner=postfix group=root mode=0660
+    when: not certstat.stat.exists
+    
+  - name: Copy dummy certificate key
+    become: True
+    copy: src=dummykey.pem dest=/etc/postfix/server.key owner=postfix group=root mode=0660
+    when: not certstat.stat.exists
+  
+  - name: Cleanup
+    local_action: file dest="{{ workdir }}" state=absent
+    changed_when: False

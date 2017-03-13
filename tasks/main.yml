@@ -75,21 +75,8 @@
       - dynamicmaps.cf
     notify: restart postfix
     
-  - name: Check if SSL certificate exists
-    become: True
-    stat: path=/etc/postfix/server.pem
-    register: certstat
-    changed_when: False
-    
-  - name: Copy dummy certificate
-    become: True
-    copy: src=dummycert.pem dest=/etc/postfix/server.pem owner=postfix group=root mode=0660
-    when: not certstat.stat.exists
-    
-  - name: Copy dummy certificate key
-    become: True
-    copy: src=dummykey.pem dest=/etc/postfix/server.key owner=postfix group=root mode=0660
-    when: not certstat.stat.exists
+  - name: Handle TLS
+    include: tls.yml
     
   - name: Load dovecot version
     command: dovecot --version
