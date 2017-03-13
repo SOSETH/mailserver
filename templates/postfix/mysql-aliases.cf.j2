@@ -1,0 +1,24 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+#
+# mysql config file for local(8) aliases(5) lookups
+#
+
+hosts = {{ mailserver_db_mysql_hosts|join(' ') }}
+user = {{ mailserver_db_mysql_user }}
+password = {{ mailserver_db_mysql_password }}
+dbname = {{ mailserver_db_mysql_db }}
+
+# Use stored procedure for performance reasons
+# We want do do this:
+# query = CALL lookup('%u', '%d')
+# Because the designers of Postfix did not really get how the MySQL C API works
+# and they do not show interest in fixing it, this results in the following error:
+# postfix/cleanup[9883]: warning: mysql query failed: Commands out of sync; you can't run this command now
+# For more details, look here: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=794496
+# Therefore, we need to change the PROCEDURE to a FUNCTION and we have to do this:
+query = SELECT retval FROM (SELECT lookup('%u', '%d') AS retval) t WHERE t.retval IS NOT NULL;
+
+require_result_set = no

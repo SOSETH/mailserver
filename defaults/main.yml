@@ -1,0 +1,87 @@
+################################################################################
+######################## Things you might need to change #######################
+################################################################################
+
+# Which host does this thing run on?
+mailserver_hostname: "mail.test.example.com"
+# How is the primary (e.g. where each user automatically gets user@domain)
+# domain called?
+mailserver_domain: "test.example.com"
+
+# How do we connect to LDAP?
+mailserver_ldap_servers: ["127.0.0.1"]
+# SASL should not be needed to authenticate users against a modern LDAP!
+mailserver_dove_sasl_bind: "no"
+mailserver_dove_sasl_mech: ""
+mailserver_dove_sasl_realm: ""
+# Enforcing TLS is probably a good idea, depending on your LDAP setup
+mailserver_ldap_tls: False
+# BaseDN. Every user in this ou gets an account with user@postfix_domain
+mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
+
+# Banners. Feel free to customize
+mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
+mailserver_dove_greeting: "Dovecot ready."
+
+# Where is the database (see role mail-mock for an example) located?
+# DO NOT USE LOCALHOST!! MySQL will be "smart" and try to use the socket which
+# is not available in the chroot...
+mailserver_db_mysql_hosts: ["127.0.0.1"]
+mailserver_db_mysql_user: "maildbuser"
+mailserver_db_mysql_password: "maildbuser"
+mailserver_db_mysql_db: "mails"
+
+# Mailbox location
+mailserver_mailbox_dir: "/var/mail/boxes"
+mailserver_mailbox_attachement_dir: "/var/mail/attachments"
+# If you change this, take care to also change what the stored procedure
+# returns from the database...
+mailserver_mailbox_user: vmail
+mailserver_mailbox_group: vmail
+
+# DKIM keys. This is an example throwaway key. You should probably define this
+# in an ansible vault.
+mailserver_dkim_domains:
+  - name: test.example.com
+    dnsname: ansibletest
+    privkey: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEAw+Z7i2x+gHYxXbzU8mJas0ZNS0a6sfVh48frssjP4GdnVbFd
+      w8r7bedHsgwt9OQo4Qz5PvzK5Dnk8P0jnxbfT4ejDIGg80fWxhExRq605hBpSUOU
+      dsNGImabKQYyNWoC7eCt1uX/twDd3vteABnmcmh5drNVNJoL/tS1/MZEW1dOfvbW
+      jODDt6bqDUSbKe7+0yqqvTipNPECtppxeVnKMZreOgnbTHoTgQDpvdDMkEVX90bo
+      6XJT5pI+Sbr27TyHtcCQ6pLPaKWGKpSk/etPnDQyHiI8wBrObP3bE4dIzsx4tNd9
+      IqMQhRTDiADkj9Tv7uuvH8Io4X/2FBeKJcVFMwIDAQABAoIBAFdgQvSB9L55eTVV
+      FynxIoFZtvn/VyAu0XWWYxOAK+/sTxPSo37D13dCtCC++/SBm5YdgkJM4HYBOJMg
+      ZTX9Lqc7WUcnvlEkVrBLVM4w+HCxGzTZVqvOF0cautQGdniKiznsf70dIvxN/6gI
+      N/oVk0quPJbsD/IBT55e47kV+cE/HPeWznSMUGWwYQIteHJdo/AT2+BCzkVYTeeU
+      D2Fpa261Caan+4PMSXhVqzo80/44ev9lK3g6lt+r7r179G7cNX8w2PgytqSmge54
+      zijz+vDemkfT46R+vKtQhfn10bCLJzuL/jZ0JjHjlhy+8wYbWBOLI3Lk7SMFwmU/
+      aVUoe4ECgYEA4A9g9A4vlsAd9Fhr7QAOmnA++2FORpShfb3BVLoD32eqDaLiSnhH
+      VvPbUuT4NekDIFIqy6+CcWka4DZN6tPx3FeiuxgpMa7wtlhPSLdzdZlmPLvqsbyQ
+      3AtbtUA/K+cpwBcJDb5PKVNhkuzfoSdUv7vsRI42OC4ArjUQ/ruCCHMCgYEA39N4
+      cMe5wkC3pEM1nOdBRv0l0eGfw5C1OMwqfYjmEoNiLoVTqyyi7kFdOQi3QRJK67T6
+      P7PPeJsPh/X+W5qc5LyVjaX16vmaIV/aLTi51YCCdLx3AcIAL0zkpvJLgVhb5gmC
+      FiVP4KkUbZD4Zrydzj5xO6lNp4Dyq5H51PeSYEECgYBEag21l5tKUZET6efSbwEG
+      gR2KDlUjUgDZbxZYM5A5J+MR1Nl52a4Wy9D9R7LOaz6sIMq2dPnEfU5ahdpWyK6C
+      FDQ5IpB5fiw70U0sK+/SSauhAdQQvz4QIlu3RU3ErwndgGsgSirLuI0DmtZR07uZ
+      69yhtjayAsHsb4Gn9kMnJwKBgFLPU5UuX8y90vPEJfbKHH2eNTrkpg5d4J6F8waE
+      +tJIp6+chmsjVZieuFXcoqhBk1SHnbqp1Q3DGMjtu1C68Gc0WoSQrV5lQKAubXMj
+      tKWIKTv1anZNB3J4mXQm2sadIUsHo4h7/4SYKcWryCuCh0QCGDTBm8hoTeAqXutr
+      OU3BAoGBANXlKWX1W8l3H4mnaNG2+2j660u8ZIcn+Txc3KptCuhm3whyaFHZd90e
+      34P5Bgnhw7BrtYUH19oCtZXS7vqNGMLOC9lGyYM0D2uIbI7ECTQHLzxE0LX5AIql
+      LCkaPse3QpQKjKhCCuiuZ/pLj5t4c08TUAeHSG3ek5jfqlSbnEIX
+      -----END RSA PRIVATE KEY-----
+
+################################################################################
+################## Things you probably do not need to change ###################
+################################################################################
+
+# Ciphers in OpenSSL format, see https://mozilla.github.io/server-side-tls/ssl-config-generator/ for sensible recommondations
+mailserver_ssl_tlsver: "!SSLv2 !SSLv3"
+mailserver_ssl_tlsciphers: "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS"
+# This is only used by dovecot atm. Dovecot generates DH parameters by itsself.
+# I have yet to check which algorithm it uses...
+mailserver_ssl_dhparam_len: 2048
+# Path to system certificate truststore
+mailserver_tls_base: "/usr/share/ca-certificates/mozilla"

@@ -1,0 +1,6 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+{% for item in mailserver_dkim_domains %}
+{{item.name}}	{{item.name}}:{{item.dnsname}}:/etc/opendkim/keys/{{item.name}}
+{% endfor %}

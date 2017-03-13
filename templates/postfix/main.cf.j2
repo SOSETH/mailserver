@@ -1,0 +1,263 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# Config file version
+compatibility_level = 2
+
+# Queue instead of bounce?
+soft_bounce = no
+
+# Defaults preserved
+queue_directory = /var/spool/postfix
+command_directory = /usr/sbin
+daemon_directory = /usr/lib/postfix/sbin
+data_directory = /var/lib/postfix
+mail_owner = postfix
+default_privs = nobody
+unknown_local_recipient_reject_code = 550
+
+# How is this system called as seen from The Internet™?
+myhostname = {{ mailserver_hostname }}
+mydomain = {{ mailserver_domain }}
+myorigin = $mydomain
+smtpd_banner = {{ mailserver_smtpd_banner }}
+
+# Listen on all interfaces
+inet_interfaces = all
+# Listen on IPv4 and IPv6
+inet_protocols = ipv4, ipv6
+# No proxy interface atm
+#proxy_interfaces =
+
+# Which domain can this machine consider itsself the destination for (excluding virtual domains)?
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+# Do not check for local recipients (-> virtual only)
+local_recipient_maps =
+# Which domains are 'virtual' domains, that is domains that this machine is additionally responsible
+# for. See http://www.postfix.org/VIRTUAL_README.html#virtual_alias as for how this is supposed to
+# work.
+virtual_alias_domains = mysql:/etc/postfix/mysql-vdomains.cf
+
+# Only relay mail for localhost
+mynetworks_style = host
+
+# Flow control: 1s * 100 SMTPD instances maximum = 100 Mails/sec
+in_flow_delay = 1s
+
+# Push mail to dovecot via lmtp. Dovecot automatically creates the
+# socket in postfix's chroot with the correct permissions
+mailbox_transport = lmtp:unix:private/dovecot-lmtp
+
+# Path to system SSL certificate store
+smtp_tls_CApath = {{ mailserver_tls_base }}
+
+# We need SSL certs. Replace the dummy certs with real ones in prod!
+smtpd_tls_cert_file = /etc/postfix/server.pem
+smtpd_tls_key_file = /etc/postfix/server.key
+
+# Ask for client cert (does not matter if none is provided)
+smtpd_tls_ask_ccert = yes
+
+# Add header that tells if and how the connection was encrypted
+smtpd_tls_received_header = yes
+
+# Configure supported cipher suites
+smtpd_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
+smtpd_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
+smtp_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
+smtp_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
+
+# Accept client logins only over encrypted connections
+smtpd_tls_auth_only = yes
+
+# TODO: DANE
+smtp_tls_security_level = may
+
+# Due to historic reasons, Postfix only uses LDAP to resolve users. To
+# actually check their credentials, we need SASL, which is used as a
+# mechanism to tell connect to Dovecot to check the credentials...
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+
+# Disable auth per default for SMTP client
+smtp_sasl_auth_enable = no
+# Enable auth per default for SMTP server, disabled via override for port 25
+smtpd_sasl_auth_enable = yes
+
+# Write into the header of each mail who authenticated it. Makes tracing
+# local spam so much easier
+smtpd_sasl_authenticated_header = yes
+
+# Check the client's sender adress to match the adresses it may actually
+# send mail for
+smtpd_sender_login_maps = mysql:/etc/postfix/mysql-senders.cf
+
+# Limit mail size to 50 MB
+message_size_limit = 52428800
+# Limit mailbox size to 500 MB. This is not actually used, but Postfix has
+# a 'sanity check' that complains if you do not also set the mailbox size
+# limit. The real limit is set and enforced by dovecot...
+mailbox_size_limit = 524288000
+
+# vrfy can be used to check if a mail adress exists, so disable it
+disable_vrfy_command = yes
+
+# Delay reject so that spamming mailservers take more time...
+smtpd_delay_reject=yes
+
+# Limit header size to 50 KB to make mailserver DoS harder
+header_size_limit = 51200
+
+# Stop accepting mails if free disk space in queue dir is less than 500 MB
+queue_minfree = 524288000
+
+# Limit the number of concurrent connections per client
+smtpd_client_connection_count_limit = 10
+smtpd_client_connection_rate_limit = 30
+
+# Limit the number of simultanious recipients
+smtpd_recipient_limit = 10
+
+# Disable ERTN. Otherwise everybody can try to flush the queue...
+smtpd_etrn_restrictions=reject
+
+# Set timeouts for different queuing stages
+delay_warning_time=3h
+maximal_queue_lifetime=2d
+bounce_queue_lifetime=1d
+
+# smtpd sender restrictions
+smtpd_sender_restrictions = reject_sender_login_mismatch,
+  permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination,
+  reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_recipient_domain,
+  reject_unauth_pipelining, permit
+
+# smtp destination restrictions
+# Either you're authenticated OR you are from 127.0.0.1 OR you satisfy a boatload of constraints
+# We need to find out in prod if this is too restrictive
+smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated,
+  permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
+  reject_non_fqdn_recipient, reject_non_fqdn_sender, reject_unknown_sender_domain,
+  reject_unknown_recipient_domain, reject_unauth_pipelining, reject_unauth_destination,
+  reject_multi_recipient_bounce, reject_non_fqdn_helo_hostname, reject_invalid_helo_hostname, permit
+  
+# DKIM is implemented by 'miltering' mail, that is sending mail through an external processing
+# script. We could also insert some DKIM tool into the LMTP pipeline, but this approache seems
+# to be more clean.
+milter_default_action = accept
+milter_protocol   = 6
+smtpd_milters     = inet:127.0.0.1:42420
+non_smtpd_milters = inet:127.0.0.1:42420
+
+# ALIAS DATABASE
+#
+# The alias_maps parameter specifies the list of alias databases used
+# by the local delivery agent. The default list is system dependent.
+#
+# On systems with NIS, the default is to search the local alias
+# database, then the NIS alias database. See aliases(5) for syntax
+# details.
+# 
+# If you change the alias database, run "postalias /etc/aliases" (or
+# wherever your system stores the mail alias file), or simply run
+# "newaliases" to build the necessary DBM or DB file.
+#
+# It will take a minute or so before changes become visible.  Use
+# "postfix reload" to eliminate the delay.
+#
+#alias_maps = dbm:/etc/aliases
+#alias_maps = hash:/etc/aliases
+#alias_maps = hash:/etc/aliases, nis:mail.aliases
+#alias_maps = netinfo:/aliases
+# See http://serverfault.com/a/644393/371842 as to why we need virtual_
+virtual_alias_maps = mysql:/etc/postfix/mysql-aliases.cf
+# Do not load normal aliases...
+alias_maps =
+
+# The alias_database parameter specifies the alias database(s) that
+# are built with "newaliases" or "sendmail -bi".  This is a separate
+# configuration parameter, because alias_maps (see above) may specify
+# tables that are not necessarily all under control by Postfix.
+#
+#alias_database = dbm:/etc/aliases
+#alias_database = dbm:/etc/mail/aliases
+#alias_database = hash:/etc/aliases
+#alias_database = hash:/etc/aliases, hash:/opt/majordomo/aliases
+
+# ADDRESS EXTENSIONS (e.g., user+foo)
+#
+# The recipient_delimiter parameter specifies the separator between
+# user names and address extensions (user+foo). See canonical(5),
+# local(8), relocated(5) and virtual(5) for the effects this has on
+# aliases, canonical, virtual, relocated and .forward file lookups.
+# Basically, the software tries user+foo and .forward+foo before
+# trying user and .forward.
+#
+# recipient_delimiter = +
+  
+# JUNK MAIL CONTROLS
+# 
+# The controls listed here are only a very small subset. The file
+# SMTPD_ACCESS_README provides an overview.
+
+# The header_checks parameter specifies an optional table with patterns
+# that each logical message header is matched against, including
+# headers that span multiple physical lines.
+#
+# By default, these patterns also apply to MIME headers and to the
+# headers of attached messages. With older Postfix versions, MIME and
+# attached message headers were treated as body text.
+#
+# For details, see "man header_checks".
+#
+#header_checks = regexp:/etc/postfix/header_checks
+
+# PARALLEL DELIVERY TO THE SAME DESTINATION
+#
+# How many parallel deliveries to the same user or domain? With local
+# delivery, it does not make sense to do massively parallel delivery
+# to the same user, because mailbox updates must happen sequentially,
+# and expensive pipelines in .forward files can cause disasters when
+# too many are run at the same time. With SMTP deliveries, 10
+# simultaneous connections to the same domain could be sufficient to
+# raise eyebrows.
+# 
+# Each message delivery transport has its XXX_destination_concurrency_limit
+# parameter.  The default is $default_destination_concurrency_limit for
+# most delivery transports. For the local delivery agent the default is 2.
+
+#local_destination_concurrency_limit = 2
+#default_destination_concurrency_limit = 20
+
+# DEBUGGING CONTROL
+#
+# The debug_peer_level parameter specifies the increment in verbose
+# logging level when an SMTP client or server host name or address
+# matches a pattern in the debug_peer_list parameter.
+#
+#debug_peer_level = 2
+
+# The debug_peer_list parameter specifies an optional list of domain
+# or network patterns, /file/name patterns or type:name tables. When
+# an SMTP client or server host name or address matches a pattern,
+# increase the verbose logging level by the amount specified in the
+# debug_peer_level parameter.
+#
+#debug_peer_list = 127.0.0.1
+#debug_peer_list = some.domain
+
+# Disabled features
+# relay_recipient_maps = hash:/etc/postfix/relay_recipients
+# home_mailbox = Mailbox
+# home_mailbox = Maildir/
+# mail_spool_directory = /var/mail
+# mail_spool_directory = /var/spool/mail
+# mailbox_command = /usr/bin/procmail
+# mailbox_command = /usr/bin/procmail -a "$EXTENSION"
+# fallback_transport = lmtp:unix:/file/name
+# fallback_transport = cyrus
+# fallback_transport =
+# luser_relay = $user@other.host
+# luser_relay = $local@other.host
+# luser_relay = admin+$local

@@ -1,0 +1,178 @@
+---
+  - name: Install mail server software
+    become: True
+    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
+    with_items:
+      - postfix
+      - postfix-ldap
+      - postfix-mysql
+      - dovecot-core
+      - dovecot-ldap
+      - dovecot-imapd
+      - dovecot-lmtpd
+      - dovecot-pop3d
+      - dovecot-mysql
+      - opendkim
+      - opendkim-tools
+      
+  - name: Ensure vmail group exists
+    become: True
+    group:
+      name: "{{ mailserver_mailbox_group }}"
+      system: yes
+      
+  - name: Ensure vmail user exists
+    become: True
+    user:
+      name: "{{ mailserver_mailbox_user }}"
+      shell: /bin/false
+      system: yes
+      createhome: no
+      home: /var/mail
+      group: "{{ mailserver_mailbox_group }}"
+      
+  - name: Ensure mail storage exists
+    become: True
+    file:
+      path: "{{ mailserver_mailbox_dir }}"
+      state: directory
+      owner: "{{ mailserver_mailbox_user }}"
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0770
+      
+  - name: Ensure mail attachement storage exists
+    become: True
+    file:
+      path: "{{ mailserver_mailbox_attachement_dir }}"
+      state: directory
+      owner: "{{ mailserver_mailbox_user }}"
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0770
+      
+  - name: Configure postfix
+    become: True
+    template: src='postfix/{{item}}.j2' dest='/etc/postfix/{{item}}' owner=root group=root mode=0644
+    with_items:
+      - main.cf
+      - master.cf
+      - mysql-aliases.cf
+      - mysql-senders.cf
+      - mysql-vdomains.cf
+      - dynamicmaps.cf
+    notify: restart postfix
+    
+  - name: Check if SSL certificate exists
+    become: True
+    stat: path=/etc/postfix/server.pem
+    register: certstat
+    changed_when: False
+    
+  - name: Copy dummy certificate
+    become: True
+    copy: src=dummycert.pem dest=/etc/postfix/server.pem owner=postfix group=root mode=0660
+    when: not certstat.stat.exists
+    
+  - name: Copy dummy certificate key
+    become: True
+    copy: src=dummykey.pem dest=/etc/postfix/server.key owner=postfix group=root mode=0660
+    when: not certstat.stat.exists
+    
+  - name: Configure dovecot
+    become: True
+    template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
+    with_items:
+      - dovecot.conf
+      - dovecot-ldap.conf.ext
+      - dovecot-sql.conf.ext
+    notify: restart dovecot
+    
+  - name: Install dovecot quota warning mail script
+    become: True
+    template: src='dovecot/quota-warning.sh.j2' dest='/etc/dovecot/quota-warning.sh' owner=root group=dovecot mode=0755
+    notify: restart dovecot
+    
+  - name: Configure dovecot features
+    become: True
+    template: src='dovecot/conf.d/{{item}}.j2' dest='/etc/dovecot/conf.d/{{item}}' owner=root group=dovecot mode=0644
+    with_items:
+      - 10-auth.conf
+      - 10-logging.conf
+      - 10-mail.conf
+      - 10-master.conf
+      - 10-ssl.conf
+      - 15-lda.conf
+      - 15-mailboxes.conf
+      - 20-imap.conf
+      - 20-lmtp.conf
+      - 20-pop3.conf
+      - 90-acl.conf
+      - 90-plugin.conf
+      - 90-quota.conf
+      - auth-ldap.conf.ext
+    notify: restart dovecot
+    
+  # This removes config files for all dovecot features that we do not use, which makes reading the
+  # generated config much less confusing...
+  - name: Remove unneeded dovecot config files
+    become: True
+    notify: restart dovecot
+    file: path='/etc/dovecot/{{item}}' state=absent
+    with_items:
+      - dovecot-dict-auth.conf.ext
+      - dovecot-dict-sql.conf.ext
+      
+  - name: Remove unneeded dovecot feature config files
+    become: True
+    notify: restart dovecot
+    file: path='/etc/dovecot/conf.d/{{item}}' state=absent
+    with_items:
+      - 10-director.conf
+      - 10-tcpwrapper.conf
+      - auth-checkpassword.conf.ext
+      - auth-deny.conf.ext
+      - auth-dict.conf.ext
+      - auth-master.conf.ext
+      - auth-sql.conf.ext
+      - auth-passwdfile.conf.ext
+      - auth-system.conf.ext
+      - auth-vpopmail.conf.ext
+      - auth-static.conf.ext
+      
+  - name: Create OpenDKIM config directory
+    become: True
+    file: path=/etc/opendkim state=directory owner=opendkim group=root mode=0754
+    
+  - name: Create OpenDKIM key directory
+    become: True
+    file: path=/etc/opendkim/keys state=directory owner=opendkim group=root mode=0740
+    
+  - name: Upload DKIM keys
+    become: True
+    no_log: True
+    copy:
+      content: "{{ item.privkey }}"
+      dest: /etc/opendkim/keys/{{ item.name }}
+      owner: opendkim
+      group: root
+      mode: 0640
+    with_items: "{{ mailserver_dkim_domains }}"
+    notify: restart opendkim
+      
+  - name: Configure OpenDKIM
+    become: True
+    template: src=opendkim/opendkim.conf.j2 dest=/etc/opendkim.conf owner=root group=opendkim mode=0644
+    notify: restart opendkim
+  
+  - name: Configure OpenDKIM service
+    become: True
+    template: src=opendkim/opendkim.j2 dest=/etc/default/opendkim owner=root group=root mode=0644
+    notify: restart opendkim
+    
+  - name: Generate OpenDKIM tables
+    become: True
+    template: src=opendkim/{{item}}.j2 dest=/etc/opendkim/{{item}} owner=root group=opendkim mode=0644
+    notify: restart opendkim
+    with_items:
+      - signtable
+      - keytable
+  

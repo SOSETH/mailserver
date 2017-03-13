@@ -1,0 +1,15 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# mysql config file for virtual_alias_domains lookups
+
+hosts = {{ mailserver_db_mysql_hosts|join(' ') }}
+user = {{ mailserver_db_mysql_user }}
+password = {{ mailserver_db_mysql_password }}
+dbname = {{ mailserver_db_mysql_db }}
+
+# Use stored procedure for performance reasons, see mysql-aliases.cf for rant
+query = SELECT retval FROM (SELECT isvdomain('%s') AS retval) t WHERE t.retval IS NOT NULL;
+
+require_result_set = no

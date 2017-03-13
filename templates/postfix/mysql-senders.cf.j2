@@ -1,0 +1,17 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# MySQL config for 'MAIL FROM' restrictions.
+# Without this, any authenticated user can use any source address...
+
+hosts = {{ mailserver_db_mysql_hosts|join(' ') }}
+user = {{ mailserver_db_mysql_user }}
+password = {{ mailserver_db_mysql_password }}
+dbname = {{ mailserver_db_mysql_db }}
+
+# This is similar to mysql-aliases. Since the function cannot return NULL howerver,
+# we can skip the outer select.
+query = SELECT checkSender('%u', '%d');
+
+require_result_set = no

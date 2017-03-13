@@ -1,0 +1,22 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# This file is overwritten by ansible because the Ubuntu/Debian package
+# overwrites the socket location per default. You cannot disable this,
+# because the unit file will set option p which requires an argument...
+
+# Command-line options specified here will override the contents of
+# /etc/opendkim.conf. See opendkim(8) for a complete list of options.
+#DAEMON_OPTS=""
+#
+# Uncomment to specify an alternate socket
+# Note that setting this will override any Socket value in opendkim.conf
+# default:
+#SOCKET="local:/var/spool/postfix/opendkim.sock"
+# listen on all interfaces on port 54321:
+#SOCKET="inet:54321"
+# listen on loopback on port 12345:
+SOCKET="inet:42420:127.0.0.1"
+# listen on 192.0.2.1 on port 12345:
+#SOCKET="inet:12345@192.0.2.1"

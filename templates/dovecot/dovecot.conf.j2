@@ -1,0 +1,57 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+## Dovecot configuration file
+
+# If you're in a hurry, see http://wiki2.dovecot.org/QuickConfiguration
+
+# "doveconf -n" command gives a clean output of the changed settings. Use it
+# instead of copy&pasting files when posting to the Dovecot mailing list.
+
+# '#' character and everything after it is treated as comments. Extra spaces
+# and tabs are ignored. If you want to use either of these explicitly, put the
+# value inside quotes, eg.: key = "# char and trailing whitespace  "
+
+# Most (but not all) settings can be overridden by different protocols and/or
+# source/destination IPs by placing the settings inside sections, for example:
+# protocol imap { }, local 127.0.0.1 { }, remote 10.0.0.0/8 { }
+
+# Default values are shown for each setting, it's not required to uncomment
+# those. These are exceptions to this though: No sections (e.g. namespace {})
+# or plugin settings are added by default, they're listed only as examples.
+# Paths are also just examples with the real defaults being based on configure
+# options. The paths listed here are for configure --prefix=/usr
+# --sysconfdir=/etc --localstatedir=/var
+
+# Enable installed protocols
+!include_try /usr/share/dovecot/protocols.d/*.protocol
+
+# Listen everywhere
+listen = *, ::
+
+#dict {
+  #quota = mysql:/etc/dovecot/dovecot-dict-sql.conf.ext
+  #expire = sqlite:/etc/dovecot/dovecot-dict-sql.conf.ext
+#}
+
+!include conf.d/*.conf
+
+# DOES NOT INCLUDE LOCAL CONFIG!
+
+# Keep defaults
+base_dir = /var/run/dovecot/
+instance_name = dovecot
+login_greeting = {{ mailserver_dove_greeting }}
+verbose_proctitle = no
+doveadm_worker_count = 0
+doveadm_socket_path = doveadm-server
+import_environment = TZ
+
+# Allow upgrade without closing client connections (change to no)
+shutdown_clients = yes
+
+# Disabled features
+#login_trusted_networks =
+#login_access_sockets = 
+#auth_proxy_self =

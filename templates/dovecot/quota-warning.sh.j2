@@ -1,0 +1,14 @@
+#!/bin/sh
+
+PERCENT=$1
+USER=$2
+cat << EOF | /usr/lib/dovecot/dovecot-lda -d $USER -o "plugin/quota=count:User quota:noenforcing"
+From: postmaster@{{mailserver_domain}}
+Subject: Quota
+
+Warning: Your mailbox is now $PERCENT% full. If your quota reaches 100%,
+you will no longer be allowed to send or receive mail. For questions
+regarding to this issue, contact postmaster@{{mailserver_domain}}.
+
+~ Your mail server
+EOF
