@@ -74,11 +74,13 @@ service imap {
   process_limit = 1024
 }
 
+{% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
     user = dovecot
   }
 }
+{% endif %}
 
 service pop3 {
   # Max. number of POP3 processes (connections)

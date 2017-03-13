@@ -2,17 +2,23 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
+{% if mailserver_postfix_version.stdout|version_compare('3.0.0', '>=', strict=True) %}
 # Config file version
 compatibility_level = 2
 
+{% endif %}
 # Queue instead of bounce?
 soft_bounce = no
 
 # Defaults preserved
 queue_directory = /var/spool/postfix
 command_directory = /usr/sbin
-daemon_directory = /usr/lib/postfix/sbin
 data_directory = /var/lib/postfix
+{% if ansible_distribution == 'Ubuntu' %}
+daemon_directory = /usr/lib/postfix/sbin
+{% else %}
+daemon_directory = /usr/lib/postfix
+{% endif %}
 mail_owner = postfix
 default_privs = nobody
 unknown_local_recipient_reject_code = 550
@@ -63,10 +69,18 @@ smtpd_tls_ask_ccert = yes
 smtpd_tls_received_header = yes
 
 # Configure supported cipher suites
-smtpd_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
 smtpd_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
-smtp_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
 smtp_tls_protocols = {{ mailserver_ssl_tlsver|replace(" ", ", ") }}
+{% if mailserver_postfix_version.stdout|version_compare('3.0.0', '>=', strict=True) %}
+# I guess they changed this with v3.0.0. If you have an earlier version
+# and this works, feel free to change the template
+smtp_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
+smtpd_tls_ciphers = {{ mailserver_ssl_tlsciphers }}
+{% else %}
+smtpd_tls_mandatory_ciphers = high
+smtp_tls_mandatory_ciphers = high
+tls_high_cipherlist = {{ mailserver_ssl_tlsciphers }}
+{% endif %}
 
 # Accept client logins only over encrypted connections
 smtpd_tls_auth_only = yes

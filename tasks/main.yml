@@ -1,4 +1,12 @@
 ---
+  - name: Load secrets
+    include_vars: file="mail-test.yml"
+    when: "'test' in group_names"
+
+  - name: Load secrets
+    include_vars: file="mail.yml"
+    when: "'test' not in group_names"
+    
   - name: Install mail server software
     become: True
     apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
@@ -49,6 +57,12 @@
       group: "{{ mailserver_mailbox_group }}"
       mode: 0770
       
+  # Feel free to clean the command up...
+  - name: Load postfix version
+    shell: postconf -d | grep 'mail_version =' | awk -F= '{print $2}' | sed 's/ //g'
+    register: mailserver_postfix_version
+    changed_when: False
+      
   - name: Configure postfix
     become: True
     template: src='postfix/{{item}}.j2' dest='/etc/postfix/{{item}}' owner=root group=root mode=0644
@@ -76,6 +90,11 @@
     become: True
     copy: src=dummykey.pem dest=/etc/postfix/server.key owner=postfix group=root mode=0660
     when: not certstat.stat.exists
+    
+  - name: Load dovecot version
+    command: dovecot --version
+    register: mailserver_dove_version
+    changed_when: False
     
   - name: Configure dovecot
     become: True

@@ -73,6 +73,10 @@ mailserver_dkim_domains:
       LCkaPse3QpQKjKhCCuiuZ/pLj5t4c08TUAeHSG3ek5jfqlSbnEIX
       -----END RSA PRIVATE KEY-----
 
+# LDAP filters
+mailserver_ldap_passfilter: "(cn=%n)"
+mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
+
 ################################################################################
 ################## Things you probably do not need to change ###################
 ################################################################################
