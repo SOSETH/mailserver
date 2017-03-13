@@ -9,7 +9,7 @@
     changed_when: False
     
   - name: Check if DH parameters exist
-    stat: path="/etc/postfix/dh-1024.pem"
+    stat: path="/etc/postfix/dh-2048.pem"
     register: dhfile
     changed_when: False
 
@@ -17,21 +17,12 @@
     local_action: command openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item }}.pem" {{ item }}
     when: not dhfile.stat.exists
     with_items:
-      - 1024
       - 2048
 
   - name: Copy DH parameters to server
     copy: src="{{ workdir }}/dh-{{ item }}.pem" dest="/etc/postfix/dh-{{ item }}.pem" owner=root group=postfix mode=0640
     when: not dhfile.stat.exists
     with_items:
-      - 1024
-      - 2048
-      
-  - name: Remove local copy of DH parameters
-    file: path={{ workdir }}/dh-{{ item }}.pem state=absent
-    when: not dhfile.stat.exists
-    with_items:
-      - 1024
       - 2048
       
   - name: Check if SSL certificate exists
@@ -42,13 +33,29 @@
     
   - name: Copy dummy certificate
     become: True
-    copy: src=dummycert.pem dest=/etc/postfix/server.pem owner=postfix group=root mode=0660
+    copy: src={{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
     when: not certstat.stat.exists
+    with_dict:
+      "dummycert.pem": "server.pem"
+      "dummykey.pem": "server.key"
     
-  - name: Copy dummy certificate key
+  - name: Check if SSL client certificate exists
     become: True
-    copy: src=dummykey.pem dest=/etc/postfix/server.key owner=postfix group=root mode=0660
-    when: not certstat.stat.exists
+    stat: path=/etc/postfix/client.pem
+    register: ccertstat
+    changed_when: False
+    
+  - name: Generate self-signed client certificate
+    local_action: shell openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
+    when: not ccertstat.stat.exists
+  
+  - name: Copy client certificat
+    become: True
+    copy: src={{ workdir }}/{{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
+    when: not ccertstat.stat.exists
+    with_dict:
+      "{{ansible_hostname}}.key": "client.key"
+      "{{ansible_hostname}}.pem": "client.pem"
   
   - name: Cleanup
     local_action: file dest="{{ workdir }}" state=absent

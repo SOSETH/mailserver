@@ -62,6 +62,12 @@ smtp_tls_CApath = {{ mailserver_tls_base }}
 smtpd_tls_cert_file = /etc/postfix/server.pem
 smtpd_tls_key_file = /etc/postfix/server.key
 
+# Present self-signed client certificate when asked. This (in theory) allows
+# remote servers to 'sticky' this client. Exchange does this per default, so it
+# should be safe...
+smtp_tls_cert_file = /etc/postfix/client.pem
+smtp_tls_key_file = /etc/postfix/client.key
+
 # Ask for client cert (does not matter if none is provided)
 smtpd_tls_ask_ccert = yes
 
@@ -87,6 +93,21 @@ tls_high_cipherlist = {{ mailserver_ssl_tlsciphers }}
 
 # Accept client logins only over encrypted connections
 smtpd_tls_auth_only = yes
+
+# In postfix-speak, 512 bits means export and 1024 bits non-export parameters
+smtpd_tls_dh1024_param_file = /etc/postfix/dh-2048.pem
+
+# Enable elliptic curve cryptography
+{% if mailserver_postfix_version.stdout|version_compare('3.2.0', '<', strict=True) %}
+smtpd_tls_eecdh_grade = ultra
+{% else %}
+smtpd_tls_eecdh_grade = auto
+tls_eecdh_auto_curves = {{ mailserver_ssl_eccurves|join(' ') }}
+{% endif %}
+
+# Enable session resumption
+smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+smtpd_tls_session_cache_timeout = 3600s
 
 # TODO: DANE
 smtp_tls_security_level = may
@@ -168,40 +189,11 @@ milter_protocol   = 6
 smtpd_milters     = inet:127.0.0.1:42420
 non_smtpd_milters = inet:127.0.0.1:42420
 
-# ALIAS DATABASE
-#
-# The alias_maps parameter specifies the list of alias databases used
-# by the local delivery agent. The default list is system dependent.
-#
-# On systems with NIS, the default is to search the local alias
-# database, then the NIS alias database. See aliases(5) for syntax
-# details.
-# 
-# If you change the alias database, run "postalias /etc/aliases" (or
-# wherever your system stores the mail alias file), or simply run
-# "newaliases" to build the necessary DBM or DB file.
-#
-# It will take a minute or so before changes become visible.  Use
-# "postfix reload" to eliminate the delay.
-#
-#alias_maps = dbm:/etc/aliases
-#alias_maps = hash:/etc/aliases
-#alias_maps = hash:/etc/aliases, nis:mail.aliases
-#alias_maps = netinfo:/aliases
+# Alias maps
 # See http://serverfault.com/a/644393/371842 as to why we need virtual_
 virtual_alias_maps = mysql:/etc/postfix/mysql-aliases.cf
 # Do not load normal aliases...
 alias_maps =
-
-# The alias_database parameter specifies the alias database(s) that
-# are built with "newaliases" or "sendmail -bi".  This is a separate
-# configuration parameter, because alias_maps (see above) may specify
-# tables that are not necessarily all under control by Postfix.
-#
-#alias_database = dbm:/etc/aliases
-#alias_database = dbm:/etc/mail/aliases
-#alias_database = hash:/etc/aliases
-#alias_database = hash:/etc/aliases, hash:/opt/majordomo/aliases
 
 # ADDRESS EXTENSIONS (e.g., user+foo)
 #
@@ -212,60 +204,11 @@ alias_maps =
 # Basically, the software tries user+foo and .forward+foo before
 # trying user and .forward.
 #
-# recipient_delimiter = +
-  
-# JUNK MAIL CONTROLS
-# 
-# The controls listed here are only a very small subset. The file
-# SMTPD_ACCESS_README provides an overview.
+# This will be required for mailman and is useful for custom sieve scripts
+recipient_delimiter = +
 
-# The header_checks parameter specifies an optional table with patterns
-# that each logical message header is matched against, including
-# headers that span multiple physical lines.
-#
-# By default, these patterns also apply to MIME headers and to the
-# headers of attached messages. With older Postfix versions, MIME and
-# attached message headers were treated as body text.
-#
-# For details, see "man header_checks".
-#
-#header_checks = regexp:/etc/postfix/header_checks
 
-# PARALLEL DELIVERY TO THE SAME DESTINATION
-#
-# How many parallel deliveries to the same user or domain? With local
-# delivery, it does not make sense to do massively parallel delivery
-# to the same user, because mailbox updates must happen sequentially,
-# and expensive pipelines in .forward files can cause disasters when
-# too many are run at the same time. With SMTP deliveries, 10
-# simultaneous connections to the same domain could be sufficient to
-# raise eyebrows.
-# 
-# Each message delivery transport has its XXX_destination_concurrency_limit
-# parameter.  The default is $default_destination_concurrency_limit for
-# most delivery transports. For the local delivery agent the default is 2.
-
-#local_destination_concurrency_limit = 2
-#default_destination_concurrency_limit = 20
-
-# DEBUGGING CONTROL
-#
-# The debug_peer_level parameter specifies the increment in verbose
-# logging level when an SMTP client or server host name or address
-# matches a pattern in the debug_peer_list parameter.
-#
-#debug_peer_level = 2
-
-# The debug_peer_list parameter specifies an optional list of domain
-# or network patterns, /file/name patterns or type:name tables. When
-# an SMTP client or server host name or address matches a pattern,
-# increase the verbose logging level by the amount specified in the
-# debug_peer_level parameter.
-#
-#debug_peer_list = 127.0.0.1
-#debug_peer_list = some.domain
-
-# Disabled features
+# Disabled features that are in the main config file per default
 # relay_recipient_maps = hash:/etc/postfix/relay_recipients
 # home_mailbox = Mailbox
 # home_mailbox = Maildir/
@@ -279,3 +222,6 @@ alias_maps =
 # luser_relay = $user@other.host
 # luser_relay = $local@other.host
 # luser_relay = admin+$local
+# debug_peer_level = 2
+# debug_peer_list = 127.0.0.1
+# debug_peer_list = some.domain
