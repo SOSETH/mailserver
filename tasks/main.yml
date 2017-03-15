@@ -73,6 +73,7 @@
       - mysql-senders.cf
       - mysql-vdomains.cf
       - dynamicmaps.cf
+      - cleanup-headers
     notify: restart postfix
     
   - name: Handle TLS

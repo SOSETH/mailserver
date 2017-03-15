@@ -9,6 +9,7 @@
     changed_when: False
     
   - name: Check if DH parameters exist
+    become: True
     stat: path="/etc/postfix/dh-2048.pem"
     register: dhfile
     changed_when: False
@@ -20,6 +21,7 @@
       - 2048
 
   - name: Copy DH parameters to server
+    become: True
     copy: src="{{ workdir }}/dh-{{ item }}.pem" dest="/etc/postfix/dh-{{ item }}.pem" owner=root group=postfix mode=0640
     when: not dhfile.stat.exists
     with_items:

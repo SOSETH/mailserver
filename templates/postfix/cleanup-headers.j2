@@ -1,0 +1,8 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# This removes the received headers for the last step from amavis to postfix,
+# as this unnecessarily bloats the mail...
+
+/^Received: from localhost \(localhost \[127\.0\.0\.1\]\)/         IGNORE
