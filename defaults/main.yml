@@ -39,6 +39,10 @@ mailserver_mailbox_attachement_dir: "/var/mail/attachments"
 mailserver_mailbox_user: vmail
 mailserver_mailbox_group: vmail
 
+# This is mostly important because spamassassin will store it's training data
+# here
+mailserver_mailbox_home: /var/mail
+
 # DKIM keys. This is an example throwaway key. You should probably define this
 # in an ansible vault.
 mailserver_dkim_domains:
