@@ -1,0 +1,9 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# Per spec, /var/run is not necessarily persistent. Therefore we need to
+# to create the sieve socket directory before each launch. If it already
+# exists the failure to create it will be ignored ('-').
+[Service]
+ExecStartPre=-/bin/mkdir /var/run/dovecot/sieve-pipe

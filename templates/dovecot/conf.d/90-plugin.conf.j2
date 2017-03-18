@@ -11,5 +11,49 @@
 # their configuration. Note that %variable expansion is done for all values.
 
 plugin {
-  #setting_name = value
+{% if ansible_local['mailserver_have_antispam'] %}
+  sieve_plugins = sieve_imapsieve sieve_extprograms
+
+  # From elsewhere to Spam folder
+  imapsieve_mailbox1_name = Junk
+  imapsieve_mailbox1_causes = COPY
+  imapsieve_mailbox1_before = file:/etc/dovecot/sieve/report-spam.sieve
+
+  # From Spam folder to elsewhere
+  imapsieve_mailbox2_name = *
+  imapsieve_mailbox2_from = Junk
+  imapsieve_mailbox2_causes = COPY
+  imapsieve_mailbox2_before = file:/etc/dovecot/sieve/report-ham.sieve
+
+  # unneeded for indirect execution:
+  # sieve_pipe_bin_dir = /etc/dovecot/sieve/bin
+  
+  sieve_pipe_socket_dir = sieve-pipe
+
+  sieve_global_extensions = +vnd.dovecot.pipe +vnd.dovecot.execute
+{% endif %}
 }
+
+{% if ansible_local['mailserver_have_antispam'] %}
+# For additional security, the sa-learn pipe scripts are not directly executed
+# with the vmail user but used as a service that listenes on a pipe
+service sieve-pipe-script {
+  executable = script /etc/dovecot/sieve/bin/sa-learn-spam.sh
+  user = vmail
+  unix_listener sieve-pipe/sa-spam {
+    user = {{ mailserver_mailbox_user }}
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+}
+
+service sieve-pipe-script {
+  executable = script /etc/dovecot/sieve/bin/sa-learn-ham.sh
+  user = vmail
+  unix_listener sieve-pipe/sa-ham {
+    user = {{ mailserver_mailbox_user }}
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+}
+{% endif %}

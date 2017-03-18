@@ -14,14 +14,34 @@
       - postfix
       - postfix-ldap
       - postfix-mysql
+      - opendkim
+      - opendkim-tools
+  
+  - name: Install dovecot (Ubuntu)
+    become: True
+    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
+    with_items:
       - dovecot-core
       - dovecot-ldap
       - dovecot-imapd
       - dovecot-lmtpd
       - dovecot-pop3d
       - dovecot-mysql
-      - opendkim
-      - opendkim-tools
+      - dovecot-sieve
+    when: ansible_distribution == 'Ubuntu'
+    
+  - name: Install dovecot (Debian)
+    become: True
+    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800 default_release=jessie-backports
+    with_items:
+      - dovecot-core
+      - dovecot-ldap
+      - dovecot-imapd
+      - dovecot-lmtpd
+      - dovecot-pop3d
+      - dovecot-mysql
+      - dovecot-sieve
+    when: ansible_distribution == 'Debian'
       
   - name: Ensure vmail group exists
     become: True
@@ -93,10 +113,61 @@
       - dovecot-sql.conf.ext
     notify: restart dovecot
     
-  - name: Install dovecot quota warning mail script
+  - name: Install dovecot script
     become: True
-    template: src='dovecot/quota-warning.sh.j2' dest='/etc/dovecot/quota-warning.sh' owner=root group=dovecot mode=0755
+    template: src='dovecot/{{ item }}.j2' dest='/etc/dovecot/{{ item }}' owner=root group=dovecot mode=0755
     notify: restart dovecot
+    with_items:
+      - quota-warning.sh
+  
+  - name: Create sieve directories
+    become: True
+    file: path='{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0755 state=directory
+    with_items:
+      - /etc/dovecot/sieve
+      - /etc/dovecot/sieve/bin
+      - /etc/dovecot/sieve/sockets
+  
+  # These scripts are intentionally unwritable for their owner
+  - name: Install sieve scripts
+    become: True
+    template: src='dovecot/sieve/{{ item }}.j2' dest='/etc/dovecot/sieve/{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0444
+    notify: restart dovecot
+    with_items:
+      - report-ham.sieve
+      - report-spam.sieve
+    when: ansible_local['mailserver_have_antispam']
+  
+  # These scripts are intentionally unwritable for their owner
+  - name: Install sieve shell scripts
+    become: True
+    template: src='dovecot/sieve/{{ item }}.j2' dest='/etc/dovecot/sieve/bin/{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0555
+    notify: restart dovecot
+    with_items:
+      - sa-learn-ham.sh
+      - sa-learn-spam.sh
+    when: ansible_local['mailserver_have_antispam']
+  
+  # Per spec, /var/run is not necessarily persistent. Therefore we need to
+  # to create the sieve socket directory before each launch
+  - name: Create systemd dovecot drop-in directory
+    become: True
+    file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
+    notify: reload systemd-dovecot
+    
+  - name: Create systemd dovecot drop-in
+    become: True
+    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0744
+    notify: reload systemd-dovecot
+      
+  # This is recommended (ahead-of-time compile) but buggy ATM :(
+  #- name: Compile sieve scripts
+  #  become: True
+  #  command: sievec "/etc/dovecot/sieve/{{ item }}"
+  #  notify: restart dovecot
+  #  with_items:
+  #    - report-ham.sieve
+  #    - report-spam.sieve
     
   - name: Configure dovecot features
     become: True

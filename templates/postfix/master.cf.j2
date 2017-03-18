@@ -54,7 +54,7 @@ virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       y       -       -       lmtp
 anvil     unix  -       -       y       -       1       anvil
 scache    unix  -       -       y       -       1       scache
-{% if mailserver_have_antispam %}
+{% if ansible_local['mailserver_have_antispam'] %}
 # Get mail to amavis in order to e.g. detect spam
 amavisfeed unix    -       -       n        -      2     lmtp
     -o lmtp_data_done_timeout=1200
