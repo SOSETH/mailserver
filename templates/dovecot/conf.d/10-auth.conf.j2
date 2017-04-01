@@ -126,7 +126,9 @@ auth_mechanisms = plain login
 #!include auth-system.conf.ext
 #!include auth-sql.conf.ext
 !include auth-ldap.conf.ext
-#!include auth-passwdfile.conf.ext
+{% if ansible_local['mailserver_have_antispam'] %}
+!include auth-passwdfile.conf.ext
+{% endif %}
 #!include auth-checkpassword.conf.ext
 #!include auth-vpopmail.conf.ext
 #!include auth-static.conf.ext

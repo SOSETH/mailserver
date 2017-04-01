@@ -52,6 +52,8 @@ plugin {
 service sieve-pipe-script {
   executable = script /etc/dovecot/sieve/bin/sa-learn-spam.sh
   user = vmail
+  process_min_avail = 8
+  process_limit = 32
   unix_listener sieve-pipe/sa-spam {
     user = {{ mailserver_mailbox_user }}
     group = {{ mailserver_mailbox_group }}
@@ -62,6 +64,8 @@ service sieve-pipe-script {
 service sieve-pipe-script {
   executable = script /etc/dovecot/sieve/bin/sa-learn-ham.sh
   user = vmail
+  process_min_avail = 8
+  process_limit = 32
   unix_listener sieve-pipe/sa-ham {
     user = {{ mailserver_mailbox_user }}
     group = {{ mailserver_mailbox_group }}
