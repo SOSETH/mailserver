@@ -142,9 +142,10 @@ user_filter = {{ mailserver_ldap_userfilter }}
 # Filter for password lookups
 pass_filter = {{ mailserver_ldap_passfilter }}
 
-# Attributes and filter to get a list of all users
-#iterate_attrs = uid=user
-#iterate_filter = (objectClass=posixAccount)
+# Attributes and filter to get a list of all users. Important for doveadm and
+# replication
+iterate_attrs = uid=user
+iterate_filter = (objectClass=posixAccount)
 
 # Default password scheme. "{scheme}" before password overrides this.
 # List of supported schemes is in: http://wiki2.dovecot.org/Authentication

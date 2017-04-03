@@ -192,7 +192,15 @@
       - 90-sieve.conf
       - 90-sieve-extprograms.conf
       - auth-ldap.conf.ext
+      - auth-passwdfile.conf.ext
     notify: restart dovecot
+    
+  - name: Create dovecot dummy users for antispam integration
+    become: True
+    template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
+    with_items:
+      - users
+    when: ansible_local['mailserver_have_antispam']
     
   # This removes config files for all dovecot features that we do not use, which makes reading the
   # generated config much less confusing...
@@ -216,7 +224,6 @@
       - auth-dict.conf.ext
       - auth-master.conf.ext
       - auth-sql.conf.ext
-      - auth-passwdfile.conf.ext
       - auth-system.conf.ext
       - auth-vpopmail.conf.ext
       - auth-static.conf.ext

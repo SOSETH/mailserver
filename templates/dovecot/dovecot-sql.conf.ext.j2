@@ -141,7 +141,9 @@ connect = host={{ mailserver_db_mysql_hosts[0] }} dbname={{ mailserver_db_mysql_
 #    home AS userdb_home, uid AS userdb_uid, gid AS userdb_gid \
 #  FROM users WHERE userid = '%u'
 
-# Query to get a list of all usernames.
-#iterate_query = SELECT username AS user FROM users
+# Query to get a list of all usernames. This is not possible using SQL as we only
+# use the database to override LDAP settings. It is however necessary to keep
+# doveadm user '*' from complaining.
+iterate_query = SELECT NULL LIMIT 0
 
 user_query = call getSettings('%u')
