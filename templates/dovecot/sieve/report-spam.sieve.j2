@@ -2,6 +2,6 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
-require ["vnd.dovecot.pipe", "copy"];
+require ["copy"];
 
-pipe :copy "sa-spam";
+redirect :copy "__spamuser_spam@{{ mailserver_domain }}";

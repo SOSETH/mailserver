@@ -2,7 +2,7 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
-require ["vnd.dovecot.pipe", "copy", "imapsieve", "environment", "variables"];
+require ["copy"];
 
 if environment :matches "imap.mailbox" "*" {
   set "mailbox" "${1}";
@@ -12,4 +12,4 @@ if string "${mailbox}" "Trash" {
   stop;
 }
 
-pipe :copy "sa-ham";
+redirect :copy "__spamuser_spam@{{ mailserver_domain }}";

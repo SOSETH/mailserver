@@ -10,8 +10,3 @@
   - name: restart opendkim
     become: True
     service: name=opendkim enabled=yes state=restarted
-    
-  - name: reload systemd-dovecot
-    become: True
-    command: systemctl daemon-reload
-    notify: restart dovecot

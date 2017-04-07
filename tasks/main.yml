@@ -55,11 +55,20 @@
     become: True
     user:
       name: "{{ mailserver_mailbox_user }}"
-      shell: /bin/false
+      shell: /bin/bash
       system: yes
       createhome: no
       home: "{{ mailserver_mailbox_home }}"
       group: "{{ mailserver_mailbox_group }}"
+      
+  - name: Ensure vmail user's home exists
+    become: True
+    file:
+      path: "{{ mailserver_mailbox_home }}"
+      state: directory
+      owner: "{{ mailserver_mailbox_user }}"
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0755
       
   - name: Ensure mail storage exists
     become: True
@@ -78,6 +87,10 @@
       owner: "{{ mailserver_mailbox_user }}"
       group: "{{ mailserver_mailbox_group }}"
       mode: 0770
+      
+  - name: Create SSH keys
+    include: ssh.yml
+    when: groups['mail']|length > 1
       
   # Feel free to clean the command up...
   - name: Load postfix version
@@ -127,8 +140,6 @@
     file: path='{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0755 state=directory
     with_items:
       - /etc/dovecot/sieve
-      - /etc/dovecot/sieve/bin
-      - /etc/dovecot/sieve/sockets
   
   # These scripts are intentionally unwritable for their owner
   - name: Install sieve scripts
@@ -139,28 +150,13 @@
       - report-ham.sieve
       - report-spam.sieve
     when: ansible_local['mailserver_have_antispam']
-  
-  # These scripts are intentionally unwritable for their owner
-  - name: Install sieve shell scripts
-    become: True
-    template: src='dovecot/sieve/{{ item }}.j2' dest='/etc/dovecot/sieve/bin/{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0555
-    notify: restart dovecot
-    with_items:
-      - sa-learn-ham.sh
-      - sa-learn-spam.sh
-    when: ansible_local['mailserver_have_antispam']
-  
-  # Per spec, /var/run is not necessarily persistent. Therefore we need to
-  # to create the sieve socket directory before each launch
-  - name: Create systemd dovecot drop-in directory
-    become: True
-    file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
-    notify: reload systemd-dovecot
+    register: sscripts
     
-  - name: Create systemd dovecot drop-in
+  - name: Delete old compiled sieve scripts
     become: True
-    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0744
-    notify: reload systemd-dovecot
+    shell: rm /etc/dovecot/sieve/*.svbin
+    failed_when: False
+    when: sscripts.changed
       
   # This is recommended (ahead-of-time compile) but buggy ATM :(
   #- name: Compile sieve scripts
@@ -186,11 +182,11 @@
       - 20-lmtp.conf
       - 20-pop3.conf
       - 20-managesieve.conf
+      - 30-replication.conf
       - 90-acl.conf
       - 90-plugin.conf
       - 90-quota.conf
       - 90-sieve.conf
-      - 90-sieve-extprograms.conf
       - auth-ldap.conf.ext
       - auth-passwdfile.conf.ext
     notify: restart dovecot
@@ -227,6 +223,7 @@
       - auth-system.conf.ext
       - auth-vpopmail.conf.ext
       - auth-static.conf.ext
+      - 90-sieve-extprograms.conf
       
   - name: Create OpenDKIM config directory
     become: True

@@ -38,6 +38,12 @@ mailserver_mailbox_attachement_dir: "/var/mail/attachments"
 # returns from the database...
 mailserver_mailbox_user: vmail
 mailserver_mailbox_group: vmail
+# Which user to use for replication? If this is not the same user as
+# mailserver_mailbox_user, please make sure that you don't mess up permissions!!
+# Root also needs to do passwortless sudo to this user, but this shoudln't be an
+# issue unless you use special pam settings
+mailserver_replication_user: "{{ mailserver_mailbox_user }}"
+mailserver_replication_user_home: "{{ mailserver_mailbox_home }}"
 
 # This is mostly important because spamassassin will store it's training data
 # here

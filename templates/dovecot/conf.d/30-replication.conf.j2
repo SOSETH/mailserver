@@ -1,0 +1,38 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+{% if groups['mail']|length > 1 %}
+# Service for dsync replication
+service replicator {
+  process_min_avail = 1
+  # We also want to be able to control this using doveadm
+  unix_listener replicator-doveadm {
+    mode = 0600
+  }
+}
+
+# Services so that dsync can actually access mails
+service aggregator {
+  fifo_listener replication-notify-fifo {
+    user = vmail
+  }
+  unix_listener replication-notify {
+    user = vmail
+  }
+}
+
+# Use SSH for connection to the remote host. Dovecot's SSL support for this
+# is rather special, so I'd probably resort to haproxy+local-ca on which I
+# do not want to depend here
+dsync_remote_cmd = sudo -u {{ mailserver_replication_user }} ssh -l%{login} %{host} doveadm dsync-server -u%u
+plugin {
+{% for item in groups['mail'] %}
+{% if item != ansible_fqdn %}
+  mail_replica = remote:{{ mailserver_replication_user }}@{{ item }}
+{% endif %}
+{% endfor %}
+}
+{% else %}
+# There is only a single mail server in the inventory, replication has been disabled
+{% endif %}

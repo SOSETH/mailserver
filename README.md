@@ -17,6 +17,9 @@ Dovecot does auth using LDAP and additionally provides a SASL socket. Both socke
 ### Integration with antispam
 If the antispam role is set up, Dovecot will create a virtual mailbox called '__spamuser' that all tagged messages will get forwarded to. This is necessary because the old antispam plugin does not work reliably and directly invoking sa-learn from sieve means that moving a mail in the web interface takes up to 5 seconds. Also, it makes it hard to actually sync the spamfilter state.
 
+### Replication
+If there is more than a single server in the group, replication between them will be automatically enabled. This will use SSH (less dependencies than SSL, for details see the `30-replication.conf.j2`), please make sure that the user is allowed to use SSH if you have custom restrictions in place!
+
 # TODO
 ## probably in separate roles (which this role maybe gets to depend on)
 * Mailman (ideally mailman3) and dependencies
