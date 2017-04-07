@@ -152,10 +152,12 @@
     when: ansible_local['mailserver_have_antispam']
     register: sscripts
     
-  - name: Delete old compiled sieve scripts
+  - name: Remove old compiled sieve scripts
     become: True
     shell: rm /etc/dovecot/sieve/*.svbin
     failed_when: False
+    args:
+      warn: False
     when: sscripts.changed
       
   # This is recommended (ahead-of-time compile) but buggy ATM :(

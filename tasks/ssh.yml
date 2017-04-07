@@ -26,11 +26,21 @@
     register: sshkey
     changed_when: False
     
+  - name: Copy ssh forced command script
+    become: True
+    template:
+      src: 'ssh-wrapper.sh.j2'
+      dest: '{{ mailserver_replication_user_home }}/.ssh/wrap.sh'
+      owner: "{{ mailserver_replication_user }}"
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0700
+    
   - name: Add replication ssh keys to replication user's authorized_keys
     become: True
     authorized_key:
       user: "{{ mailserver_replication_user }}"
       key: "{{ hostvars[item]['sshkey'].stdout }}"
+      key_options: command="{{ mailserver_replication_user_home }}/.ssh/wrap.sh"
     with_items: "{{ groups['mail'] }}"
     
   - name: Add hosts' public key to known hosts

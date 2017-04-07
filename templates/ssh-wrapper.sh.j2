@@ -1,0 +1,14 @@
+#!/bin/bash
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# This script gets called everytime another server uses ssh for vmail
+# Since this should only be used for dovecot replication, we restrict the
+# command here. The command is stored in $SSH_ORIGINAL_COMMAND and should have
+# the form
+# 'doveadm dsync-server -u%u' where %u is the user the server tries to sync
+
+# :set megaquotemode
+USER="$(echo "$SSH_ORIGINAL_COMMAND" | sed 's/doveadm dsync-server -u//g')"
+exec doveadm dsync-server -u"$USER"
