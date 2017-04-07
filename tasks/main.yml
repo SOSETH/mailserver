@@ -159,6 +159,18 @@
     args:
       warn: False
     when: sscripts.changed
+  
+  # Per spec, /var/run is not necessarily persistent. Therefore we need to
+  # to create the socket directory before each launch
+  - name: Create systemd dovecot drop-in directory
+    become: True
+    file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
+    notify: reload systemd-dovecot
+    
+  - name: Create systemd dovecot drop-in
+    become: True
+    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0744
+    notify: reload systemd-dovecot
       
   # This is recommended (ahead-of-time compile) but buggy ATM :(
   #- name: Compile sieve scripts
