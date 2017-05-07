@@ -191,8 +191,6 @@ smtpd_milters     = inet:127.0.0.1:42420
 non_smtpd_milters = inet:127.0.0.1:42420
 
 {% if ansible_local['mailserver_have_antispam'] %}
-# We have antispam. Use it by passing all incoming mail through it
-content_filter = amavisfeed:[127.0.0.1]:10024
 # Remove repeated Received headers from amavis
 header_checks = regexp:/etc/postfix/cleanup-headers
 {% endif %}

@@ -17,6 +17,11 @@ smtp      inet  n       -       y       -       -       smtpd
     -o smtpd_sasl_auth_enable=no
     -o smtpd_recipient_restrictions=permit_mynetworks,reject_invalid_hostname,reject_non_fqdn_hostname,reject_non_fqdn_recipient,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,reject_non_fqdn_helo_hostname,reject_invalid_helo_hostname,permit
     -o header_checks=
+{% if ansible_local['mailserver_have_antispam'] %}
+    -o smtpd_proxy_filter=127.0.0.1:10024
+    -o smtpd_proxy_options=speed_adjust
+    -o smtpd_proxy_timeout=60s
+{% endif %}
 submission inet n       -       y       -       -       smtpd
   -o syslog_name=postfix/submission
   -o smtpd_tls_security_level=encrypt
@@ -55,12 +60,6 @@ lmtp      unix  -       -       y       -       -       lmtp
 anvil     unix  -       -       y       -       1       anvil
 scache    unix  -       -       y       -       1       scache
 {% if ansible_local['mailserver_have_antispam'] %}
-# Get mail to amavis in order to e.g. detect spam
-amavisfeed unix    -       -       n        -      2     lmtp
-    -o lmtp_data_done_timeout=1200
-    -o lmtp_send_xforward_command=yes
-    -o disable_dns_lookups=yes
-    -o max_use=20
 # Receive filtered mail from amavis to reinject it into postfix
 127.0.0.1:10025 inet n    -       n       -       -     smtpd
     -o content_filter=
