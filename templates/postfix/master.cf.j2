@@ -18,15 +18,17 @@ smtp      inet  n       -       y       -       -       smtpd
     -o smtpd_recipient_restrictions=permit_mynetworks,reject_invalid_hostname,reject_non_fqdn_hostname,reject_non_fqdn_recipient,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,reject_non_fqdn_helo_hostname,reject_invalid_helo_hostname,permit
     -o header_checks=
 {% if ansible_local['mailserver_have_antispam'] %}
-    -o smtpd_proxy_filter=127.0.0.1:10024
+    -o smtpd_proxy_filter=127.0.0.1:10026
     -o smtpd_proxy_options=speed_adjust
     -o smtpd_proxy_timeout=60s
+    -o content_filter=
 {% endif %}
 submission inet n       -       y       -       -       smtpd
   -o syslog_name=postfix/submission
   -o smtpd_tls_security_level=encrypt
   -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
   -o header_checks=
+  -o content_filter=
 smtps     inet  n       -       y       -       -       smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes
@@ -34,6 +36,7 @@ smtps     inet  n       -       y       -       -       smtpd
   -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
   -o milter_macro_daemon_name=ORIGINATING
   -o header_checks=
+  -o content_filter=
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup
 qmgr      unix  n       -       n       300     1       qmgr
@@ -60,9 +63,34 @@ lmtp      unix  -       -       y       -       -       lmtp
 anvil     unix  -       -       y       -       1       anvil
 scache    unix  -       -       y       -       1       scache
 {% if ansible_local['mailserver_have_antispam'] %}
+# Send mail off to amavis
+amavisfeed unix  -       -       n       -       2       lmtp
+    -o lmtp_data_done_timeout=600
+    -o lmtp_send_xforward_command=yes
+    -o disable_dns_lookups=yes
+    -o max_use=20
 # Receive filtered mail from amavis to reinject it into postfix
 127.0.0.1:10025 inet n    -       n       -       -     smtpd
     -o content_filter=
+    -o smtpd_delay_reject=no
+    -o smtpd_client_restrictions=permit_mynetworks,reject
+    -o smtpd_helo_restrictions=
+    -o smtpd_sender_restrictions=
+    -o smtpd_recipient_restrictions=permit_mynetworks,reject
+    -o smtpd_data_restrictions=reject_unauth_pipelining
+    -o smtpd_end_of_data_restrictions=
+    -o smtpd_restriction_classes=
+    -o mynetworks=127.0.0.0/8
+    -o smtpd_error_sleep_time=0
+    -o smtpd_soft_error_limit=1001
+    -o smtpd_hard_error_limit=1000
+    -o smtpd_client_connection_count_limit=0
+    -o smtpd_client_connection_rate_limit=0
+    -o receive_override_options=no_unknown_recipient_checks,no_milters
+    -o local_header_rewrite_clients=
+# Receive filtered mail from spamassassin to reinject it into postfix
+# Careful: This will still pass through amavis
+127.0.0.1:10027 inet n    -       n       -       -     smtpd
     -o smtpd_delay_reject=no
     -o smtpd_client_restrictions=permit_mynetworks,reject
     -o smtpd_helo_restrictions=
