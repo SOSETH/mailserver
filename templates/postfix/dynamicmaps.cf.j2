@@ -5,7 +5,9 @@
 {% if ansible_distribution == 'Ubuntu' %}
 ldap	postfix-ldap.so.1.0.1	dict_ldap_open
 mysql	postfix-mysql.so.1.0.1	dict_mysql_open
+pcre	postfix-pcre.so.1.0.1	dict_pcre_open
 {% else %}
 ldap	/usr/lib/postfix/dict_ldap.so	dict_ldap_open
 mysql	/usr/lib/postfix/dict_mysql.so	dict_mysql_open
+pcre	/usr/lib/postfix/dict_pcre.so	dict_pcre_open
 {% endif %}

@@ -14,6 +14,7 @@
       - postfix
       - postfix-ldap
       - postfix-mysql
+      - postfix-pcre
       - opendkim
       - opendkim-tools
   

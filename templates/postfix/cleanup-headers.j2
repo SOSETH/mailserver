@@ -4,6 +4,15 @@
 
 # This removes the received headers for the last step from amavis/spamassassin
 # to postfix, as this unnecessarily bloats the mail...
-/^Received: from.*\(localhost \[127\.0\.0\.1\]\)/         IGNORE
+/^Received: from.*\(localhost \[127\.0\.0\.1\]\)/       IGNORE
+
+# Exposing the version of SpamAssassin is, from my point, not a good idea. The
+# developers think that they need to force the header because otherwise they
+# cannot debug stuff. Amavis discards it and I'm with amavis here...
+/^X-Spam-Checker-Version:.*/				IGNORE
+/^(.*)version=(.*)/		REPLACE	X-Spam-Status: ${1} ${2}
+
 # This tempfails mail that spamassassin wants us to greylist
-/^X-Spam-Plz-Greylist: 1/	REJECT 4.5.1 Greylisted, please try again later.
+# Use 4.2.0 since postgrey tells me that Microsoft Exchange has a bug
+# otherwise...
+/^X-Spam-Plz-Greylist: 1/	REJECT 4.2.0 Greylisted, please try again later.

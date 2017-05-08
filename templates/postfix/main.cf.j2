@@ -195,7 +195,7 @@ non_smtpd_milters = inet:127.0.0.1:42420
 # Spamassassin is done elsewhere
 content_filter = amavisfeed:[127.0.0.1]:10024
 # Remove repeated Received headers from amavis
-header_checks = regexp:/etc/postfix/cleanup-headers
+header_checks = pcre:/etc/postfix/cleanup-headers
 {% endif %}
 
 # Alias maps
