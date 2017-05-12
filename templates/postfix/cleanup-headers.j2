@@ -16,3 +16,8 @@
 # Use 4.2.0 since postgrey tells me that Microsoft Exchange has a bug
 # otherwise...
 /^X-Spam-Plz-Greylist: 1/	REJECT 4.2.0 Greylisted, please try again later.
+
+# This rejects mail with a score of geq 7. Nobody will read messages like this
+# (probably), so we outright reject them, which would tell a legitimate sender
+# about it...
+/^X-Spam-Level: \*\*\*\*\*\*\*.*/	REJECT 5.5.4 Looks like spam to me, sorry.
