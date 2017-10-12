@@ -1,0 +1,12 @@
+dbUrl=jdbc:mariadb://{{ mailserver_db_mysql_hosts|first }}:3306/{{ mailserver_db_mysql_db }}?user={{ mailserver_db_mysql_user }}&password={{mailserver_db_mysql_password }}
+groups={{ mailserver_ldap_groups }}
+extraMembers=extras.yaml
+baseMailDomain={{ mailserver_domain }}
+baseDNGroups={{ mailserver_ldap_groupdn }}
+filterExprGroups={{ mailserver_ldap_groupfilter }}
+baseDNUsers={{ mailserver_ldap_basedn }}
+filterExprUsers={{ mailserver_ldap_grsync_userfilter }}
+ldapUrl={{ mailserver_ldap_url }}
+bindDN={{ mailserver_ldap_binddn }}
+bindPwd={{ mailserver_ldap_bindpwd }}
+memberAttribute={{ mailserver_ldap_memberattr }}

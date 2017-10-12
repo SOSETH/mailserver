@@ -19,6 +19,26 @@ mailserver_ldap_tls: False
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 
+# LDAP filters
+mailserver_ldap_passfilter: "(cn=%n)"
+mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
+
+# Create aliases for groups in LDAP?
+mailserver_ldap_grsync_enable: False
+# LDAP group listing also needs access to LDAP
+mailserver_ldap_url: ldap://127.0.0.1:389
+# To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
+# Specify a user with sufficient privileges here
+mailserver_ldap_binddn: foo
+mailserver_ldap_bindpwd: bar
+# Where are users/groups located in your LDAP?
+mailserver_ldap_grsync_userfilter: "(&(objectClass=posixAccount)(cn=?))"
+mailserver_ldap_groupfilter: "(&(objectclass=posixgroup)(cn=?))"
+mailserver_ldap_groupdn: "ou=groups,dc=test,dc=example,dc=com"
+# Which groups to synchronize
+mailserver_ldap_groups: "dummygroup1, dummygroup2"
+mailserver_ldap_memberattr: "member"
+
 # Banners. Feel free to customize
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
 mailserver_dove_greeting: "Dovecot ready."
@@ -83,9 +103,7 @@ mailserver_dkim_domains:
       LCkaPse3QpQKjKhCCuiuZ/pLj5t4c08TUAeHSG3ek5jfqlSbnEIX
       -----END RSA PRIVATE KEY-----
 
-# LDAP filters
-mailserver_ldap_passfilter: "(cn=%n)"
-mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
+
 
 ################################################################################
 ################## Things you probably do not need to change ###################

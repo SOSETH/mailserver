@@ -6,7 +6,7 @@
   - name: Load secrets
     include_vars: file="mail.yml"
     when: "'test' not in group_names"
-    
+
   - name: Install mail server software
     become: True
     apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
@@ -17,7 +17,7 @@
       - postfix-pcre
       - opendkim
       - opendkim-tools
-  
+
   - name: Install dovecot (Ubuntu)
     become: True
     apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
@@ -31,7 +31,7 @@
       - dovecot-sieve
       - dovecot-managesieved
     when: ansible_distribution == 'Ubuntu'
-    
+
   - name: Install dovecot (Debian)
     become: True
     apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800 default_release=jessie-backports
@@ -45,13 +45,13 @@
       - dovecot-sieve
       - dovecot-managesieved
     when: ansible_distribution == 'Debian'
-      
+
   - name: Ensure vmail group exists
     become: True
     group:
       name: "{{ mailserver_mailbox_group }}"
       system: yes
-      
+
   - name: Ensure vmail user exists
     become: True
     user:
@@ -61,7 +61,7 @@
       createhome: no
       home: "{{ mailserver_mailbox_home }}"
       group: "{{ mailserver_mailbox_group }}"
-      
+
   - name: Ensure vmail user's home exists
     become: True
     file:
@@ -70,7 +70,7 @@
       owner: "{{ mailserver_mailbox_user }}"
       group: "{{ mailserver_mailbox_group }}"
       mode: 0755
-      
+
   - name: Ensure mail storage exists
     become: True
     file:
@@ -79,7 +79,7 @@
       owner: "{{ mailserver_mailbox_user }}"
       group: "{{ mailserver_mailbox_group }}"
       mode: 0770
-      
+
   - name: Ensure mail attachement storage exists
     become: True
     file:
@@ -88,17 +88,17 @@
       owner: "{{ mailserver_mailbox_user }}"
       group: "{{ mailserver_mailbox_group }}"
       mode: 0770
-      
+
   - name: Create SSH keys
     include: ssh.yml
     when: groups['mail']|length > 1
-      
+
   # Feel free to clean the command up...
   - name: Load postfix version
     shell: postconf -d | grep 'mail_version =' | awk -F= '{print $2}' | sed 's/ //g'
     register: mailserver_postfix_version
     changed_when: False
-      
+
   - name: Configure postfix
     become: True
     template: src='postfix/{{item}}.j2' dest='/etc/postfix/{{item}}' owner=root group=root mode=0644
@@ -111,15 +111,15 @@
       - dynamicmaps.cf
       - cleanup-headers
     notify: restart postfix
-    
+
   - name: Handle TLS
     include: tls.yml
-    
+
   - name: Load dovecot version
     command: dovecot --version
     register: mailserver_dove_version
     changed_when: False
-    
+
   - name: Configure dovecot
     become: True
     template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
@@ -128,20 +128,20 @@
       - dovecot-ldap.conf.ext
       - dovecot-sql.conf.ext
     notify: restart dovecot
-    
+
   - name: Install dovecot script
     become: True
     template: src='dovecot/{{ item }}.j2' dest='/etc/dovecot/{{ item }}' owner=root group=dovecot mode=0755
     notify: restart dovecot
     with_items:
       - quota-warning.sh
-  
+
   - name: Create sieve directories
     become: True
     file: path='{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0755 state=directory
     with_items:
       - /etc/dovecot/sieve
-  
+
   # These scripts are intentionally unwritable for their owner
   - name: Install sieve scripts
     become: True
@@ -152,7 +152,7 @@
       - report-spam.sieve
     when: ansible_local['mailserver_have_antispam']
     register: sscripts
-    
+
   - name: Remove old compiled sieve scripts
     become: True
     shell: rm /etc/dovecot/sieve/*.svbin
@@ -160,19 +160,19 @@
     args:
       warn: False
     when: sscripts.changed
-  
+
   # Per spec, /var/run is not necessarily persistent. Therefore we need to
   # to create the socket directory before each launch
   - name: Create systemd dovecot drop-in directory
     become: True
     file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
     notify: reload systemd-dovecot
-    
+
   - name: Create systemd dovecot drop-in
     become: True
     template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0744
     notify: reload systemd-dovecot
-      
+
   # This is recommended (ahead-of-time compile) but buggy ATM :(
   #- name: Compile sieve scripts
   #  become: True
@@ -181,7 +181,7 @@
   #  with_items:
   #    - report-ham.sieve
   #    - report-spam.sieve
-    
+
   - name: Configure dovecot features
     become: True
     template: src='dovecot/conf.d/{{item}}.j2' dest='/etc/dovecot/conf.d/{{item}}' owner=root group=dovecot mode=0644
@@ -205,14 +205,14 @@
       - auth-ldap.conf.ext
       - auth-passwdfile.conf.ext
     notify: restart dovecot
-    
+
   - name: Create dovecot dummy users for antispam integration
     become: True
     template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
     with_items:
       - users
     when: ansible_local['mailserver_have_antispam']
-    
+
   # This removes config files for all dovecot features that we do not use, which makes reading the
   # generated config much less confusing...
   - name: Remove unneeded dovecot config files
@@ -222,7 +222,7 @@
     with_items:
       - dovecot-dict-auth.conf.ext
       - dovecot-dict-sql.conf.ext
-      
+
   - name: Remove unneeded dovecot feature config files
     become: True
     notify: restart dovecot
@@ -239,15 +239,15 @@
       - auth-vpopmail.conf.ext
       - auth-static.conf.ext
       - 90-sieve-extprograms.conf
-      
+
   - name: Create OpenDKIM config directory
     become: True
     file: path=/etc/opendkim state=directory owner=opendkim group=root mode=0754
-    
+
   - name: Create OpenDKIM key directory
     become: True
     file: path=/etc/opendkim/keys state=directory owner=opendkim group=root mode=0740
-    
+
   - name: Upload DKIM keys
     become: True
     no_log: True
@@ -259,17 +259,17 @@
       mode: 0640
     with_items: "{{ mailserver_dkim_domains }}"
     notify: restart opendkim
-      
+
   - name: Configure OpenDKIM
     become: True
     template: src=opendkim/opendkim.conf.j2 dest=/etc/opendkim.conf owner=root group=opendkim mode=0644
     notify: restart opendkim
-  
+
   - name: Configure OpenDKIM service
     become: True
     template: src=opendkim/opendkim.j2 dest=/etc/default/opendkim owner=root group=root mode=0644
     notify: restart opendkim
-    
+
   - name: Generate OpenDKIM tables
     become: True
     template: src=opendkim/{{item}}.j2 dest=/etc/opendkim/{{item}} owner=root group=opendkim mode=0644
@@ -277,4 +277,7 @@
     with_items:
       - signtable
       - keytable
-  
+
+  - name: Configure LDAP group sync
+    include: ldapgroups.yml
+    when: mailserver_ldap_grsync_enable
