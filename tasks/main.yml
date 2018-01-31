@@ -98,6 +98,7 @@
     shell: postconf -d | grep 'mail_version =' | awk -F= '{print $2}' | sed 's/ //g'
     register: mailserver_postfix_version
     changed_when: False
+    tags: postfix
 
   - name: Configure postfix
     become: True
@@ -110,7 +111,10 @@
       - mysql-vdomains.cf
       - dynamicmaps.cf
       - cleanup-headers
-    notify: restart postfix
+    notify:
+      - restart postfix
+      - restart postfix (debian stretch)
+    tags: postfix
 
   - name: Handle TLS
     include: tls.yml
@@ -269,6 +273,16 @@
     become: True
     template: src=opendkim/opendkim.j2 dest=/etc/default/opendkim owner=root group=root mode=0644
     notify: restart opendkim
+    register: debianhack
+
+  # For reasons I do not understand, the socket is hardcoded in Debian's systemd unit file.
+  # The init script in jessie correctly read the settings, on Strech you need to regenerate
+  # the unit. I don't know why the unit doesn't load the configuration as an env-file, so the
+  # workaround is replicated here.
+  - name: Regenerate OpenDKIM service file
+    become: True
+    when: debianhack.changed
+    shell: /lib/opendkim/opendkim.service.generate && systemctl daemon-reload
 
   - name: Generate OpenDKIM tables
     become: True

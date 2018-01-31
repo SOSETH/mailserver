@@ -2,7 +2,12 @@
   - name: restart postfix
     become: True
     service: name=postfix enabled=yes state=restarted
-    
+
+  - name: restart postfix (debian stretch)
+    become: True
+    when: ansible_distribution_release == "stretch"
+    service: name=postfix@- enabled=yes state=restarted
+
   - name: restart dovecot
     become: True
     service: name=dovecot enabled=yes state=restarted
