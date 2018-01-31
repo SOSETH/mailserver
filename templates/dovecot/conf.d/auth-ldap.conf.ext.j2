@@ -37,6 +37,7 @@ passdb {
 userdb {
   driver = sql
   args = /etc/dovecot/dovecot-sql.conf.ext
+  result_success = continue
 }
 
 # Second userdb. We should never reach this during normal auth, but it is

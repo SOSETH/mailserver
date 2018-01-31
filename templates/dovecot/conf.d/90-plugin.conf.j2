@@ -11,7 +11,7 @@
 # their configuration. Note that %variable expansion is done for all values.
 
 plugin {
-{% if ansible_local['mailserver_have_antispam'] %}
+{% if ansible_local['mailserver_have_antispam']|default(False) %}
 
   # From elsewhere to Spam folder
   imapsieve_mailbox1_name = Junk

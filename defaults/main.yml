@@ -3,6 +3,8 @@
 ################################################################################
 
 mailserver_behind_proxy: True
+mailserver_proxy_name: 192.33.91.97
+mailserver_proxy_port: 26
 # Which host does this thing run on?
 mailserver_hostname: "mail.test.example.com"
 # How is the primary (e.g. where each user automatically gets user@domain)
@@ -23,6 +25,8 @@ mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 # LDAP filters
 mailserver_ldap_passfilter: "(cn=%n)"
 mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
+mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
+mailserver_ldap_usermailattr: "mail"
 
 # Create aliases for groups in LDAP?
 mailserver_ldap_grsync_enable: False

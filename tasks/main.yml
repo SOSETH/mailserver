@@ -111,6 +111,7 @@
       - mysql-vdomains.cf
       - dynamicmaps.cf
       - cleanup-headers
+      - ldap-map.cf
     notify:
       - restart postfix
       - restart postfix (debian stretch)
@@ -154,7 +155,7 @@
     with_items:
       - report-ham.sieve
       - report-spam.sieve
-    when: ansible_local['mailserver_have_antispam']
+    when: ansible_local['mailserver_have_antispam']|default(False)
     register: sscripts
 
   - name: Remove old compiled sieve scripts
@@ -215,7 +216,7 @@
     template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
     with_items:
       - users
-    when: ansible_local['mailserver_have_antispam']
+    when: ansible_local['mailserver_have_antispam']|default(False)
 
   # This removes config files for all dovecot features that we do not use, which makes reading the
   # generated config much less confusing...

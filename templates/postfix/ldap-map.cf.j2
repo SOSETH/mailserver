@@ -1,0 +1,21 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+{% if mailserver_ldap_tls %}
+server_host =
+{% for item in mailserver_ldap_servers %}
+    ldaps://{{ item }}
+{% endfor %}
+{% else %}
+server_host =
+{% for item in mailserver_ldap_servers %}
+    ldap://{{ item }}
+{% endfor %}
+{% endif %}
+search_base = {{ mailserver_ldap_basedn }}
+version = 3
+bind_dn = {{ mailserver_ldap_binddn }}
+bind_pw = {{ mailserver_ldap_bindpwd }}
+query_filter = {{ mailserver_ldap_usermailfilter }}
+result_attribute = {{ mailserver_ldap_usermailattr }}

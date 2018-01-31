@@ -2,6 +2,10 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
+{% if mailserver_behind_proxy %}
+relayhost = [{{ mailserver_proxy_name }}]:{{ mailserver_proxy_port }}
+{% endif %}
+
 {% if mailserver_postfix_version.stdout|version_compare('3.1.6', '>=', strict=True) %}
 # Don't crash on Debian stretch
 shlib_directory = /usr/lib/postfix
@@ -43,8 +47,7 @@ inet_protocols = ipv4, ipv6
 
 # Which domain can this machine consider itsself the destination for (excluding virtual domains)?
 mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
-# Do not check for local recipients (-> virtual only)
-local_recipient_maps =
+
 # Which domains are 'virtual' domains, that is domains that this machine is additionally responsible
 # for. See http://www.postfix.org/VIRTUAL_README.html#virtual_alias as for how this is supposed to
 # work.
@@ -224,6 +227,12 @@ header_checks = pcre:/etc/postfix/cleanup-headers
 virtual_alias_maps = mysql:/etc/postfix/mysql-aliases.cf
 # Do not load normal aliases...
 alias_maps =
+
+# Check users against LDAP. This is necessary to reject invalid users at SMTP time.
+# If we don't do this, Postifx would only figure out that a user does not exist when
+# handing the mail over to Dovecot via LMTP, at which point the original SMTP connection
+# would already be closed, leading to a bounce from *this* mailserver.
+local_recipient_maps = proxy:ldap:/etc/postfix/ldap-map.cf
 
 # ADDRESS EXTENSIONS (e.g., user+foo)
 #
