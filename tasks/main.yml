@@ -89,9 +89,26 @@
       group: "{{ mailserver_mailbox_group }}"
       mode: 0770
 
+  - name: Concat certificates
+    become: True
+    when: mailserver_have_mailman
+    shell: "cat /etc/haproxy/lmtp-cl.crt /etc/haproxy/lmtp-cl.key > /etc/haproxy/lmtp-cl-full.pem"
+    changed_when: False
+
+  - name: Configure LMTP HAproxy dropin
+    become: True
+    when: mailserver_have_mailman
+    template:
+      src: lmtp.conf.j2
+      dest: /etc/haproxy/conf.d/20-lmtp.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart haproxy
+
   - name: Create SSH keys
     include: ssh.yml
-    when: groups['mail']|length > 1
+    when: groups[mailserver_group]|length > 1
 
   # Feel free to clean the command up...
   - name: Load postfix version
@@ -109,6 +126,7 @@
       - mysql-aliases.cf
       - mysql-senders.cf
       - mysql-vdomains.cf
+      - mysql-transport.cf
       - dynamicmaps.cf
       - cleanup-headers
       - ldap-map.cf
@@ -121,6 +139,7 @@
     include: tls.yml
 
   - name: Load dovecot version
+    become: True
     command: dovecot --version
     register: mailserver_dove_version
     changed_when: False
@@ -175,7 +194,7 @@
 
   - name: Create systemd dovecot drop-in
     become: True
-    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0744
+    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0644
     notify: reload systemd-dovecot
 
   # This is recommended (ahead-of-time compile) but buggy ATM :(

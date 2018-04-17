@@ -2,7 +2,7 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
-{% if groups['mail']|length > 1 %}
+{% if groups[mailserver_group]|length > 1 %}
 # Service for dsync replication
 service replicator {
   process_min_avail = 1
@@ -27,9 +27,9 @@ service aggregator {
 # do not want to depend here
 dsync_remote_cmd = sudo -u {{ mailserver_replication_user }} ssh -l%{login} %{host} doveadm dsync-server -u%u
 plugin {
-{% for item in groups['mail'] %}
-{% if item != ansible_fqdn %}
-  mail_replica = remote:{{ mailserver_replication_user }}@{{ item }}
+{% for item in groups[mailserver_group] %}
+{% if hostvars[item]['ansible_fqdn'] != ansible_fqdn %}
+  mail_replica = remote:{{ mailserver_replication_user }}@{{ hostvars[item]['ansible_fqdn'] }}
 {% endif %}
 {% endfor %}
 }

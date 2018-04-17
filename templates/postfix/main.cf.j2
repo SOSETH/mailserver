@@ -6,16 +6,14 @@
 relayhost = [{{ mailserver_proxy_name }}]:{{ mailserver_proxy_port }}
 {% endif %}
 
-{% if mailserver_postfix_version.stdout|version_compare('3.1.6', '>=', strict=True) %}
+{% if ansible_distribution_release == "stretch" %}
 # Don't crash on Debian stretch
 shlib_directory = /usr/lib/postfix
 
 {% endif %}
-{% if mailserver_postfix_version.stdout|version_compare('3.0.0', '>=', strict=True) %}
 # Config file version
 compatibility_level = 2
 
-{% endif %}
 # Queue instead of bounce?
 soft_bounce = no
 
@@ -59,9 +57,9 @@ mynetworks_style = host
 # Flow control: 1s * 100 SMTPD instances maximum = 100 Mails/sec
 in_flow_delay = 1s
 
-# Push mail to dovecot via lmtp. Dovecot automatically creates the
-# socket in postfix's chroot with the correct permissions
-mailbox_transport = lmtp:unix:private/dovecot-lmtp
+# The difference between mailbox_transport_maps and transport_maps is
+# that transport_maps will also apply when sending mails!
+mailbox_transport_maps = mysql:/etc/postfix/mysql-transport.cf
 
 # Path to system SSL certificate store
 smtp_tls_CApath = {{ mailserver_tls_base }}
@@ -99,7 +97,7 @@ smtpd_tls_auth_only = yes
 smtpd_tls_dh1024_param_file = /etc/postfix/dh-2048.pem
 
 # Enable elliptic curve cryptography
-{% if mailserver_postfix_version.stdout|version_compare('3.2.0', '<', strict=True) %}
+{% if ansible_distribution_release == "stretch" %}
 smtpd_tls_eecdh_grade = ultra
 {% else %}
 smtpd_tls_eecdh_grade = auto

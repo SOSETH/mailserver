@@ -3,11 +3,11 @@
     set_fact:
       workdir: "/tmp/amtls_{{ ansible_hostname }}"
     changed_when: False
-      
+
   - name: Ensure work dir exists
     local_action: file dest="{{ workdir }}" state=directory
     changed_when: False
-    
+
   - name: Check if DH parameters exist
     become: True
     stat: path="/etc/postfix/dh-2048.pem"
@@ -26,13 +26,13 @@
     when: not dhfile.stat.exists
     with_items:
       - 2048
-      
+
   - name: Check if SSL certificate exists
     become: True
     stat: path=/etc/postfix/server.pem
     register: certstat
     changed_when: False
-    
+
   - name: Copy dummy certificate
     become: True
     copy: src={{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
@@ -40,17 +40,37 @@
     with_dict:
       "dummycert.pem": "server.pem"
       "dummykey.pem": "server.key"
-    
+
+  - name: Extract live certificate
+    become: True
+    when: mailserver_have_cert
+    copy:
+      content: "{{ mailserver_tls_cert }}"
+      dest: "/etc/postfix/server.pem"
+      owner: postfix
+      group: postfix
+      mode: 0660
+
+  - name: Extract live certificate key
+    become: True
+    when: mailserver_have_cert
+    copy:
+      content: "{{ mailserver_tls_key }}"
+      dest: "/etc/postfix/server.key"
+      owner: postfix
+      group: postfix
+      mode: 0660
+
   - name: Check if SSL client certificate exists
     become: True
     stat: path=/etc/postfix/client.pem
     register: ccertstat
     changed_when: False
-    
+
   - name: Generate self-signed client certificate
     local_action: shell openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
     when: not ccertstat.stat.exists
-  
+
   - name: Copy client certificat
     become: True
     copy: src={{ workdir }}/{{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
@@ -58,7 +78,7 @@
     with_dict:
       "{{ansible_hostname}}.key": "client.key"
       "{{ansible_hostname}}.pem": "client.pem"
-  
+
   - name: Cleanup
     local_action: file dest="{{ workdir }}" state=absent
     changed_when: False

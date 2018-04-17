@@ -41,7 +41,7 @@
       user: "{{ mailserver_replication_user }}"
       key: "{{ hostvars[item]['sshkey'].stdout }}"
       key_options: command="{{ mailserver_replication_user_home }}/.ssh/wrap.sh"
-    with_items: "{{ groups['mail'] }}"
+    with_items: "{{ groups[mailserver_group] }}"
 
   - name: Add hosts' public key to known hosts (IPv4)
     become: True
@@ -49,7 +49,7 @@
       path: '{{ mailserver_replication_user_home }}/.ssh/known_hosts'
       name: "{{ item }}"
       key: "{{ item }},{{ hostvars[item]['ansible_default_ipv4']['address'] }} ssh-ed25519 {{ hostvars[item]['ansible_ssh_host_key_ed25519_public'] }}"
-    with_items: "{{ groups['mail'] }}"
+    with_items: "{{ groups[mailserver_group] }}"
 
   - name: Add hosts' public key to known hosts (IPv6)
     become: True
@@ -57,7 +57,7 @@
       path: '{{ mailserver_replication_user_home }}/.ssh/known_hosts'
       name: "{{ item }}"
       key: "{{ item }},{{ hostvars[item]['ansible_default_ipv6']['address'] }} ssh-ed25519 {{ hostvars[item]['ansible_ssh_host_key_ed25519_public'] }}"
-    with_items: "{{ groups['mail'] }}"
+    with_items: "{{ groups[mailserver_group] }}"
 
   - name: Fix replication user SSH file permissions
     become: True

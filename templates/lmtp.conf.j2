@@ -1,0 +1,11 @@
+frontend lmtp-front
+    mode tcp
+    bind 127.0.0.1:1409
+    default_backend lmtp-back
+
+backend lmtp-back
+    mode tcp
+{% for item in mailserver_mailman_hosts %}
+    server {{ item.name }} {{ item.dns }}:{{ item.port }} ssl crt /etc/haproxy/lmtp-cl-full.pem ca-file /etc/haproxy/lmtp-ca.crt verify required check
+{% endfor %}
+
