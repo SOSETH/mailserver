@@ -288,6 +288,7 @@
     become: True
     template: src=opendkim/opendkim.conf.j2 dest=/etc/opendkim.conf owner=root group=opendkim mode=0644
     notify: restart opendkim
+    register: debianhack2
 
   - name: Configure OpenDKIM service
     become: True
@@ -301,7 +302,7 @@
   # workaround is replicated here.
   - name: Regenerate OpenDKIM service file
     become: True
-    when: debianhack.changed
+    when: debianhack.changed or debianhack2.changed
     shell: /lib/opendkim/opendkim.service.generate && systemctl daemon-reload
 
   - name: Generate OpenDKIM tables

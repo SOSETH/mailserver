@@ -3,7 +3,7 @@
 ############################################################################
 
 {% if mailserver_behind_proxy %}
-relayhost = [{{ mailserver_proxy_name }}]:{{ mailserver_proxy_port }}
+relayhost = {{ mailserver_proxy_name }}:{{ mailserver_proxy_port }}
 {% endif %}
 
 {% if ansible_distribution_release == "stretch" %}
