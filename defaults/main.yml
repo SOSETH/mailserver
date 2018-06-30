@@ -28,7 +28,7 @@ mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
 mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
 mailserver_ldap_usermailattr: "mail"
 
-# Create aliases for groups in LDAP?
+# Create aliases for groups in LDAP? Not implemented for the moment!
 mailserver_ldap_grsync_enable: False
 # LDAP group listing also needs access to LDAP
 mailserver_ldap_url: ldap://127.0.0.1:389

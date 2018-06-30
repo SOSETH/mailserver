@@ -1,9 +1,0 @@
-[Unit]
-Description=Synchronize LDAP groups regularly
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=5m
-
-[Install]
-WantedBy=timers.target

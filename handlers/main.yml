@@ -29,7 +29,3 @@
     become: True
     command: systemctl daemon-reload
     notify: restart ldap-groups
-
-  - name: restart ldap-groups
-    become: True
-    service: name=ldap-groups-sync.timer enabled=yes state=restarted

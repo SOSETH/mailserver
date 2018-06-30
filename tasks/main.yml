@@ -312,7 +312,3 @@
     with_items:
       - signtable
       - keytable
-
-  - name: Configure LDAP group sync
-    include: ldapgroups.yml
-    when: mailserver_ldap_grsync_enable
