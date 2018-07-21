@@ -1,12 +1,4 @@
 ---
-  - name: Load secrets
-    include_vars: file="vars/mail-test.yml"
-    when: "'test' in group_names"
-
-  - name: Load secrets
-    include_vars: file="vars/mail.yml"
-    when: "'test' not in group_names"
-
   - name: Install mail server software
     become: True
     apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
@@ -17,11 +9,6 @@
       - postfix-pcre
       - opendkim
       - opendkim-tools
-
-  - name: Install dovecot (Ubuntu)
-    become: True
-    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
-    with_items:
       - dovecot-core
       - dovecot-ldap
       - dovecot-imapd
@@ -30,21 +17,6 @@
       - dovecot-mysql
       - dovecot-sieve
       - dovecot-managesieved
-    when: ansible_distribution == 'Ubuntu'
-
-  - name: Install dovecot (Debian)
-    become: True
-    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
-    with_items:
-      - dovecot-core
-      - dovecot-ldap
-      - dovecot-imapd
-      - dovecot-lmtpd
-      - dovecot-pop3d
-      - dovecot-mysql
-      - dovecot-sieve
-      - dovecot-managesieved
-    when: ansible_distribution == 'Debian'
 
   - name: Ensure vmail group exists
     become: True
@@ -132,7 +104,6 @@
       - ldap-map.cf
     notify:
       - restart postfix
-      - restart postfix (debian stretch)
     tags: postfix
 
   - name: Handle TLS

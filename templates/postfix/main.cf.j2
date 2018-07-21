@@ -6,11 +6,9 @@
 relayhost = {{ mailserver_proxy_name }}:{{ mailserver_proxy_port }}
 {% endif %}
 
-{% if ansible_distribution_release == "stretch" %}
 # Don't crash on Debian stretch
 shlib_directory = /usr/lib/postfix
 
-{% endif %}
 # Config file version
 compatibility_level = 2
 
@@ -21,11 +19,7 @@ soft_bounce = no
 queue_directory = /var/spool/postfix
 command_directory = /usr/sbin
 data_directory = /var/lib/postfix
-{% if ansible_distribution == 'Ubuntu' or ansible_distribution_release == "stretch" %}
 daemon_directory = /usr/lib/postfix/sbin
-{% else %}
-daemon_directory = /usr/lib/postfix
-{% endif %}
 mail_owner = postfix
 default_privs = nobody
 unknown_local_recipient_reject_code = 550
