@@ -103,10 +103,6 @@
     with_items:
       - main.cf
       - master.cf
-      - mysql-aliases.cf
-      - mysql-senders.cf
-      - mysql-vdomains.cf
-      - mysql-transport.cf
       - dynamicmaps.cf
       - cleanup-headers
       - ldap-map.cf
@@ -114,9 +110,45 @@
       - restart postfix
     tags: postfix
 
+  - name: Configure postfix (MySQL config)
+    become: True
+    when: mailserver_config_method == "mysql"
+    template:
+      src: 'postfix/{{ item }}.j2'
+      dest: '/etc/postfix/{{ item }}'
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - mysql-aliases.cf
+      - mysql-senders.cf
+      - mysql-vdomains.cf
+      - mysql-transport.cf
+    notify:
+      - restart postfix
+    tags: postfix
+
+  - name: Configure postfix (LDAP config)
+    become: True
+    when: mailserver_config_method == "ldap"
+    template:
+      src: 'postfix/{{ item }}.j2'
+      dest: '/etc/postfix/{{ item }}'
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - ldap-aliases.cf
+      - ldap-senders.cf
+      - ldap-vdomains.cf
+      - ldap-transport.cf
+    notify:
+      - restart postfix
+    tags: postfix
+
   - name: Upload postfix startup chroot helper script
     become: True
-    when: mailserver_postfix_sasl_bind
+    when: mailserver_postfix_sasl_bind or mailserver_config_method == "ldap"
     template:
       src: postfix/chroot-helper.sh.j2
       dest: /etc/postfix/chroot-helper.sh
@@ -127,7 +159,7 @@
 
   - name: Create postfix startup dropin directory
     become: True
-    when: mailserver_postfix_sasl_bind
+    when: mailserver_postfix_sasl_bind or mailserver_config_method == "ldap"
     file:
       path: /etc/systemd/system/postfix@.service.d
       state: directory
@@ -137,7 +169,7 @@
 
   - name: Upload postfix startup dropin
     become: True
-    when: mailserver_postfix_sasl_bind
+    when: mailserver_postfix_sasl_bind or mailserver_config_method == "ldap"
     template:
       src: postfix/dropin.conf.j2
       dest: /etc/systemd/system/postfix@.service.d/ansible.conf

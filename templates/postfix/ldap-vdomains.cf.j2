@@ -4,6 +4,6 @@
 
 {% include './templates/postfix/ldap-conn.j2' %}
 
-search_base = {{ mailserver_ldap_basedn }}
-query_filter = {{ mailserver_ldap_usermailfilter }}
-result_attribute = {{ mailserver_ldap_usermailattr }}
+search_base = {{ mailserver_ldap_config_basedn }}
+query_filter = (&(objectClass=postfixConfiguration)(virtualDomain=%s))
+result_attribute = virtualDomain
