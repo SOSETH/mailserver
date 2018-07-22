@@ -131,3 +131,4 @@ mailserver_have_cert: False
 ################################# DO NOT TOUCH #################################
 ################################################################################
 mailserver_have_antispam: False
+mailserver_have_mailman: False
