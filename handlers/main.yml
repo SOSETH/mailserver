@@ -24,3 +24,8 @@
     become: True
     command: systemctl daemon-reload
     notify: restart ldap-groups
+
+  - name: reload systemd-postfix
+    become: True
+    command: systemctl daemon-reload
+    notify: restart postfix

@@ -11,6 +11,9 @@ mailserver_hostname: "mail.test.example.com"
 # domain called?
 mailserver_domain: "test.example.com"
 
+# Where are aliases/vdomains/routes stored? Default is mysql, but ldap is also possible
+mailserver_config_method: "mysql"
+
 # How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
 # SASL should not be needed to authenticate users against a modern LDAP!
@@ -19,8 +22,11 @@ mailserver_dove_sasl_mech: ""
 mailserver_dove_sasl_realm: ""
 # Enforcing TLS is probably a good idea, depending on your LDAP setup
 mailserver_ldap_tls: False
+# If using encryption ... SSL on port 636 or STARTTLS on 389
+mailserver_ldap_dovecot_ssl: False
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
+# Define mailserver_ldap_cert_file if you have a private CA
 
 # LDAP filters
 mailserver_ldap_passfilter: "(cn=%n)"

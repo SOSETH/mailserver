@@ -1,0 +1,4 @@
+[Service]
+ExecStartPre=
+ExecStartPre=/usr/lib/postfix/configure-instance.sh %i
+ExecStartPre=/etc/postfix/chroot-helper.sh
