@@ -26,6 +26,7 @@ mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 mailserver_ldap_passfilter: "(cn=%n)"
 mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
 mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
+mailserver_ldap_iteratefilter: "(objectClass=posixAccount)"
 mailserver_ldap_usermailattr: "mail"
 
 # Create aliases for groups in LDAP? Not implemented for the moment!
