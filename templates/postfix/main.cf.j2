@@ -194,8 +194,10 @@ smtpd_sender_restrictions = reject_sender_login_mismatch,
 # Either you're authenticated OR you are from 127.0.0.1 OR you satisfy a boatload of constraints
 # We need to find out in prod if this is too restrictive
 # Also note that the same thing ist in master.cf without sasl restrictions
-smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated,
-  permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
+smtpd_recipient_restrictions = reject_sender_login_mismatch,
+{% if mailserver_config_method == "ldap" %}  check_sender_access ldap:/etc/postfix/ldap-external-send.cf,
+{% endif %}
+  permit_sasl_authenticated, permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
   reject_non_fqdn_recipient, reject_non_fqdn_sender, reject_unknown_sender_domain,
   reject_unknown_recipient_domain, reject_unauth_pipelining, reject_unauth_destination,
   reject_multi_recipient_bounce, reject_non_fqdn_helo_hostname, reject_invalid_helo_hostname, permit
@@ -242,6 +244,11 @@ local_recipient_maps = proxy:ldap:/etc/postfix/ldap-map.cf
 #
 # This will be required for mailman and is useful for custom sieve scripts
 recipient_delimiter = +
+
+# Create a restriction class "local_only" which can be used to limit
+# outgoing mail of some users to this domain only
+smtpd_restriction_classes = local_only
+local_only = check_recipient_access hash:/etc/postfix/local_domains, reject
 
 import_environment = KRB5CCNAME=FILE:/run/postfix/krb5_ccache
 

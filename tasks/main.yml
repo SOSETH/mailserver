@@ -110,6 +110,29 @@
       - restart postfix
     tags: postfix
 
+  - name: Configure postfix (store local domain)
+    become: True
+    register: dommap
+    copy:
+      content: "{{ mailserver_domain }} OK"
+      dest: /etc/postfix/local_domains
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - restart postfix
+    tags: postfix
+
+  - name: Configure postfix (generate local domain map)
+    become: True
+    when: dommap.changed
+    shell: postmap /etc/postfix/local_domains
+    args:
+      chdir: /etc/postfix
+    notify:
+      - restart postfix
+    tags: postfix
+
   - name: Configure postfix (MySQL config)
     become: True
     when: mailserver_config_method == "mysql"
@@ -142,6 +165,7 @@
       - ldap-senders.cf
       - ldap-vdomains.cf
       - ldap-transport.cf
+      - ldap-external-send.cf
     notify:
       - restart postfix
     tags: postfix

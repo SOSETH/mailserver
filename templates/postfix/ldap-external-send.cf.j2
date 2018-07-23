@@ -1,0 +1,10 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+{% include './templates/postfix/ldap-conn.j2' %}
+
+search_base = {{ mailserver_ldap_basedn }}
+query_filter = (&(|(primaryMail=%s)(sendAlias=%s))(canSendExternally=FALSE))
+result_attribute = canSendExternally
+result_format = local_only
