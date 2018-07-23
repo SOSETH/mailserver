@@ -18,5 +18,5 @@ server_host = {{ mailserver_ldap_servers|join(' ') }}
 bind_dn = {{ mailserver_ldap_binddn }}
 bind_pw = {{ mailserver_ldap_bindpwd }}
 search_base = {{ mailserver_ldap_basedn }}
-query_filter = (|(primaryMail=%s)(alias=@%d))
+query_filter = (uid=%s)
 result_attribute = mailboxTransport
