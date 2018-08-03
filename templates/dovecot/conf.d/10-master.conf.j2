@@ -77,7 +77,9 @@ service imap {
 {% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
-    user = dovecot
+    user = {{ mailserver_mailbox_user }}
+    group = dovecot
+    mode = 0660
   }
 }
 {% endif %}
