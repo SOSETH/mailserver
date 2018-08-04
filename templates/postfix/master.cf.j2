@@ -15,13 +15,8 @@
 # We list
 smtp      inet  n       -       y       -       -       smtpd
   -o smtpd_sasl_auth_enable=no
-{% if not mailserver_behind_proxy %}
-  -o smtpd_recipient_restrictions=permit_mynetworks,reject_invalid_hostname,reject_non_fqdn_hostname,reject_non_fqdn_recipient,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,reject_non_fqdn_helo_hostname,reject_invalid_helo_hostname,permit
-  -o smtpd_sender_restrictions=permit_mynetworks,{% if mailserver_config_method == "ldap" %}check_recipient_access ldap:/etc/postfix/ldap-external-receive.cf,{% endif %}reject_unauth_destination,reject_non_fqdn_sender,reject_non_fqdn_recipient,reject_unknown_recipient_domain,reject_unauth_pipelining,permit
-{% else %}
-  -o smtpd_recipient_restrictions=permit_mynetworks,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,permit
-  -o smtpd_sender_restrictions=permit_mynetworks,{% if mailserver_config_method == "ldap" %}check_recipient_access ldap:/etc/postfix/ldap-external-receive.cf,{% endif %}reject_unauth_destination,reject_non_fqdn_sender,reject_non_fqdn_recipient,reject_unknown_recipient_domain,reject_unauth_pipelining,permit
-{% endif %}
+  -o smtpd_recipient_restrictions=$smtpd_recipient_restrictions_25
+  -o smtpd_sender_restrictions=$smtpd_sender_restrictions_25
   -o header_checks=
 {% if ansible_local['mailserver_have_antispam']|default(False) %}
   -o smtpd_proxy_filter=127.0.0.1:10026
