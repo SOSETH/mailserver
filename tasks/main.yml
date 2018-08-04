@@ -148,6 +148,7 @@
       - ldap-vdomains.cf
       - ldap-transport.cf
       - ldap-external-send.cf
+      - ldap-external-receive.cf
     notify:
       - restart postfix
     tags: postfix
