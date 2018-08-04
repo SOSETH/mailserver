@@ -247,8 +247,9 @@ recipient_delimiter = +
 
 # Create a restriction class "local_only" which can be used to limit
 # outgoing mail of some users to this domain only
-smtpd_restriction_classes = local_only
+smtpd_restriction_classes = local_only, local_only_sender
 local_only = check_recipient_access hash:/etc/postfix/local_domains, reject
+local_only_sender = check_sender_access hash:/etc/postfix/local_domains, reject
 
 import_environment = KRB5CCNAME=FILE:/run/postfix/krb5_ccache
 
