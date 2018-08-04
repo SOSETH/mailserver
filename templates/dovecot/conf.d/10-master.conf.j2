@@ -72,6 +72,14 @@ service imap {
 
   # Max. number of IMAP processes (connections)
   process_limit = 1024
+
+{% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
+  unix_listener imap-master {
+    user = {{ mailserver_mailbox_user }}
+    group = dovecot
+    mode = 0660
+  }
+{% endif %}
 }
 
 {% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
