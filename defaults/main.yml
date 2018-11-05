@@ -14,6 +14,13 @@ mailserver_domain: "test.example.com"
 # Where are aliases/vdomains/routes stored? Default is mysql, but ldap is also possible
 mailserver_config_method: "mysql"
 
+mailserver_ssl_cert: "/etc/postfix/server.pem"
+mailserver_ssl_key: "/etc/postfix/server.key"
+mailserver_ssl_client_cert: "/etc/postfix/client.pem"
+mailserver_ssl_client_key: "/etc/postfix/client.key"
+mailserver_dovecot_ssl_cert: "{{ mailserver_ssl_cert }}"
+mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
+
 # How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
 # SASL should not be needed to authenticate users against a modern LDAP!
