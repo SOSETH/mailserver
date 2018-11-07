@@ -17,6 +17,7 @@
       - dovecot-mysql
       - dovecot-sieve
       - dovecot-managesieved
+      - dovecot-gssapi
 
   - name: Ensure vmail group exists
     become: True

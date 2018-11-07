@@ -27,6 +27,9 @@ mailserver_ldap_servers: ["127.0.0.1"]
 mailserver_dove_sasl_bind: "no"
 mailserver_dove_sasl_mech: ""
 mailserver_dove_sasl_realm: ""
+# Dovecot can optinally provide GSSAPI support for Postfix
+mailserver_use_gssapi: False
+mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 # Enforcing TLS is probably a good idea, depending on your LDAP setup
 mailserver_ldap_tls: False
 # If using encryption ... SSL on port 636 or STARTTLS on 389
