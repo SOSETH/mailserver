@@ -17,6 +17,7 @@
         - dovecot-mysql
         - dovecot-sieve
         - dovecot-managesieved
+        - dovecot-gssapi
       state: latest
       update_cache: True
       cache_valid_time: 1800
