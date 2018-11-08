@@ -29,3 +29,7 @@
     become: True
     command: systemctl daemon-reload
     notify: restart postfix
+
+  - name: newalias
+    become: True
+    command: newaliases

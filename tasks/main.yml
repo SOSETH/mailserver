@@ -103,6 +103,17 @@
       - restart postfix
     tags: postfix
 
+  - name: Configure local aliases
+    become: True
+    when: mailserver_system_owner != False
+    template:
+      src: postfix/aliases.j2
+      dest: /etc/aliases
+      owner: root
+      group: root
+      mode: 0644
+    notify: newalias
+
   - name: Configure postfix (store local domain)
     become: True
     register: dommap

@@ -37,6 +37,11 @@ inet_protocols = ipv4, ipv6
 # No proxy interface atm
 #proxy_interfaces =
 
+{% if mailserver_system_owner != "False" %}
+# Local alias rewrite
+alias_database = hash:/etc/aliases
+{% endif %}
+
 # Which domain can this machine consider itsself the destination for (excluding virtual domains)?
 mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
 

@@ -125,7 +125,34 @@ mailserver_dkim_domains:
       LCkaPse3QpQKjKhCCuiuZ/pLj5t4c08TUAeHSG3ek5jfqlSbnEIX
       -----END RSA PRIVATE KEY-----
 
-
+# All mails to root etc. will be redirected to this@domain
+mailserver_system_owner: False
+mailserver_to_redirect:
+  - mailer-daemon # Debian defualts
+  - postmaster
+  - nobody
+  - hostmaster
+  - usenet
+  - news
+  - webmaster
+  - www
+  - ftp
+  - abuse
+  - noc
+  - security
+  - daemon # Everybody who could conceivably have a crontab
+  - mail
+  - uucp
+  - www-data
+  - redis
+  - postgres
+  - mysql
+  - prometheus
+  - haproxy
+  - nagios
+  - root
+  - maxf
+  - postfix
 
 ################################################################################
 ################## Things you probably do not need to change ###################
