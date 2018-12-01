@@ -195,7 +195,7 @@
       owner: root
       group: root
       mode: 0644
-    notify: reload systemd-postfix
+    notify: restart postfix
 
   - name: Handle TLS
     include: tls.yml
@@ -252,12 +252,12 @@
   - name: Create systemd dovecot drop-in directory
     become: True
     file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
-    notify: reload systemd-dovecot
+    notify: restart dovecot
 
   - name: Create systemd dovecot drop-in
     become: True
     template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0644
-    notify: reload systemd-dovecot
+    notify: restart dovecot
 
   # This is recommended (ahead-of-time compile) but buggy ATM :(
   #- name: Compile sieve scripts
@@ -349,23 +349,12 @@
   - name: Configure OpenDKIM
     become: True
     template: src=opendkim/opendkim.conf.j2 dest=/etc/opendkim.conf owner=root group=opendkim mode=0644
-    notify: restart opendkim
-    register: debianhack2
+    notify: regenerate opendkim
 
   - name: Configure OpenDKIM service
     become: True
     template: src=opendkim/opendkim.j2 dest=/etc/default/opendkim owner=root group=root mode=0644
-    notify: restart opendkim
-    register: debianhack
-
-  # For reasons I do not understand, the socket is hardcoded in Debian's systemd unit file.
-  # The init script in jessie correctly read the settings, on Strech you need to regenerate
-  # the unit. I don't know why the unit doesn't load the configuration as an env-file, so the
-  # workaround is replicated here.
-  - name: Regenerate OpenDKIM service file
-    become: True
-    when: debianhack.changed or debianhack2.changed
-    shell: /lib/opendkim/opendkim.service.generate && systemctl daemon-reload
+    notify: regenerate opendkim
 
   - name: Generate OpenDKIM tables
     become: True

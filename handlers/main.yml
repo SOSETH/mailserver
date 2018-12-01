@@ -1,35 +1,45 @@
 ---
   - name: restart postfix
     become: True
-    service: name=postfix@- enabled=yes state=restarted
+    systemd:
+      name: postfix@-
+      enabled: yes
+      state: restarted
+      daemon_reload: yes
 
   - name: restart dovecot
     become: True
-    service: name=dovecot enabled=yes state=restarted
+    systemd:
+      name: dovecot
+      enabled: yes
+      state: restarted
+      daemon_reload: yes
 
   - name: restart opendkim
     become: True
-    service: name=opendkim enabled=yes state=restarted
+    systemd:
+      name: opendkim
+      enabled: yes
+      state: restarted
+      daemon_reload: yes
 
   - name: restart haproxy
     become: True
-    service: name=haproxy enabled=yes state=restarted
-
-  - name: reload systemd-dovecot
-    become: True
-    command: systemctl daemon-reload
-    notify: restart dovecot
-
-  - name: reload systemd-ldap
-    become: True
-    command: systemctl daemon-reload
-    notify: restart ldap-groups
-
-  - name: reload systemd-postfix
-    become: True
-    command: systemctl daemon-reload
-    notify: restart postfix
+    service:
+      name: haproxy
+      enabled: yes
+      state: restarted
 
   - name: newalias
     become: True
     command: newaliases
+
+  # For reasons I do not understand, the socket is hardcoded in Debian's
+  # systemd unit file. The init script in jessie correctly reads the settings,
+  # on Strech you need to regenerate the unit. I don't know why the unit
+  # doesn't load the configuration as an env-file, so the workaround is
+  # replicated here.
+  - name: regenerate opendkim
+    become: True
+    shell: /lib/opendkim/opendkim.service.generate
+    notify: restart opendkim
