@@ -90,6 +90,7 @@
     shell: postconf -d | grep 'mail_version =' | awk -F= '{print $2}' | sed 's/ //g'
     register: mailserver_postfix_version
     changed_when: False
+    check_mode: False
     tags: postfix
 
   - name: Configure postfix
