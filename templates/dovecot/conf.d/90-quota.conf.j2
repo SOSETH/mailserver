@@ -74,7 +74,7 @@ plugin {
   #quota = maildir:User quota
   #quota = dict:User quota::proxy::quota
   #quota = fs:User quota
-  {% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
+  {% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
   quota = count:User quota
   {% else %}
   quota = dict:User quota::file:%h/mdbox/dovecot-quota

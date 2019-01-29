@@ -1,22 +1,25 @@
 ---
   - name: Install mail server software
     become: True
-    apt: name={{item}} state=latest update_cache=yes cache_valid_time=1800
-    with_items:
-      - postfix
-      - postfix-ldap
-      - postfix-mysql
-      - postfix-pcre
-      - opendkim
-      - opendkim-tools
-      - dovecot-core
-      - dovecot-ldap
-      - dovecot-imapd
-      - dovecot-lmtpd
-      - dovecot-pop3d
-      - dovecot-mysql
-      - dovecot-sieve
-      - dovecot-managesieved
+    apt:
+      name:
+        - postfix
+        - postfix-ldap
+        - postfix-mysql
+        - postfix-pcre
+        - opendkim
+        - opendkim-tools
+        - dovecot-core
+        - dovecot-ldap
+        - dovecot-imapd
+        - dovecot-lmtpd
+        - dovecot-pop3d
+        - dovecot-mysql
+        - dovecot-sieve
+        - dovecot-managesieved
+      state: latest
+      update_cache: True
+      cache_valid_time: 1800
 
   - name: Ensure vmail group exists
     become: True
