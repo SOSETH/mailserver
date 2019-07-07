@@ -2,6 +2,7 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 # dict-type	so-name (pathname)	dict-function	mkmap-function
-ldap	postfix-ldap.so.1.0.1	dict_ldap_open
-mysql	postfix-mysql.so.1.0.1	dict_mysql_open
-pcre	postfix-pcre.so.1.0.1	dict_pcre_open
+pcre	postfix-pcre.so	dict_pcre_open	
+ldap	postfix-ldap.so	dict_ldap_open	
+mysql	postfix-mysql.so	dict_mysql_open	
+sqlite	postfix-sqlite.so	dict_sqlite_open	
