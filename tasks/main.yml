@@ -66,13 +66,13 @@
 
   - name: Concat certificates
     become: True
-    when: mailserver_have_mailman
+    when: mailserver_have_mailman|bool
     shell: "cat /etc/haproxy/lmtp-cl.crt /etc/haproxy/lmtp-cl.key > /etc/haproxy/lmtp-cl-full.pem"
     changed_when: False
 
   - name: Configure LMTP HAproxy dropin
     become: True
-    when: mailserver_have_mailman
+    when: mailserver_have_mailman|bool
     template:
       src: lmtp.conf.j2
       dest: /etc/haproxy/conf.d/20-lmtp.conf
@@ -117,6 +117,7 @@
     command: dovecot --version
     register: mailserver_dove_version
     changed_when: False
+    check_mode: False
 
   - name: Configure dovecot
     become: True

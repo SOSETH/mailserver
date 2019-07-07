@@ -43,7 +43,7 @@
 
   - name: Extract live certificate
     become: True
-    when: mailserver_have_cert
+    when: mailserver_have_cert|bool
     copy:
       content: "{{ mailserver_tls_cert }}"
       dest: "/etc/postfix/server.pem"
@@ -53,7 +53,7 @@
 
   - name: Extract live certificate key
     become: True
-    when: mailserver_have_cert
+    when: mailserver_have_cert|bool
     copy:
       content: "{{ mailserver_tls_key }}"
       dest: "/etc/postfix/server.key"
