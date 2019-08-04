@@ -1,0 +1,22 @@
+---
+  - name: Check if DH parameters exist
+    become: True
+    stat:
+      path: "{{ item.path }}"
+    register: dhfile
+    changed_when: False
+
+  - name: Generate DH parameters locally
+    command: openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item.name }}.pem" 2048
+    delegate_to: localhost
+    when: not dhfile.stat.exists
+
+  - name: Copy DH parameters to server
+    become: True
+    copy:
+      src: "{{ workdir }}/dh-{{ item.name }}.pem"
+      dest: "{{ item.path }}"
+      owner: "{{ item.owner }}"
+      group: "{{ item.group }}"
+      mode: 0640
+    when: not dhfile.stat.exists

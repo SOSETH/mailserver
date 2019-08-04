@@ -213,7 +213,12 @@
 
   - name: Configure dovecot
     become: True
-    template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
+    template:
+      src: 'dovecot/{{item}}.j2'
+      dest: '/etc/dovecot/{{item}}'
+      owner: dovecot
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0640
     with_items:
       - dovecot.conf
       - dovecot-ldap.conf.ext
@@ -222,7 +227,12 @@
 
   - name: Install dovecot script
     become: True
-    template: src='dovecot/{{ item }}.j2' dest='/etc/dovecot/{{ item }}' owner=root group=dovecot mode=0755
+    template:
+      src: 'dovecot/{{item}}.j2'
+      dest: '/etc/dovecot/{{item}}'
+      owner: dovecot
+      group: "{{ mailserver_mailbox_group }}"
+      mode: 0755
     notify: restart dovecot
     with_items:
       - quota-warning.sh
