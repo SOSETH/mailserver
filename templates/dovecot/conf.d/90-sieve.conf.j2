@@ -96,7 +96,7 @@ plugin {
   # to the default. For example `sieve_extensions = +imapflags' will enable the
   # deprecated imapflags extension in addition to all extensions were already
   # enabled by default.
-  #sieve_extensions = +notify +imapflags
+  sieve_extensions = +editheader
 
   # Which Sieve language extensions are ONLY available in global scripts. This
   # can be used to restrict the use of certain Sieve extensions to administrator
@@ -180,7 +180,7 @@ plugin {
   #
   # This setting is ignored when the envelope sender is "<>". In that case the
   # sender of the redirected message is also always "<>".
-  #sieve_redirect_envelope_from = sender
+  sieve_redirect_envelope_from = user_email
 
   ## TRACE DEBUGGING
   # Trace debugging provides detailed insight in the operations performed by
