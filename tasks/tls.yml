@@ -5,8 +5,11 @@
     changed_when: False
 
   - name: Ensure work dir exists
-    local_action: file dest="{{ workdir }}" state=directory
+    file:
+      dest: "{{ workdir }}"
+      state: directory
     changed_when: False
+    delegate_to: localhost
 
   - name: Check if DH parameters exist
     become: True
@@ -15,7 +18,8 @@
     changed_when: False
 
   - name: Generate DH parameters locally
-    local_action: command openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item }}.pem" {{ item }}
+    command: openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item }}.pem" {{ item }}
+    delegate_to: localhost
     when: not dhfile.stat.exists
     with_items:
       - 2048
@@ -43,7 +47,7 @@
 
   - name: Extract live certificate
     become: True
-    when: mailserver_have_cert
+    when: mailserver_have_cert|bool
     copy:
       content: "{{ mailserver_tls_cert }}"
       dest: "/etc/postfix/server.pem"
@@ -53,7 +57,7 @@
 
   - name: Extract live certificate key
     become: True
-    when: mailserver_have_cert
+    when: mailserver_have_cert|bool
     copy:
       content: "{{ mailserver_tls_key }}"
       dest: "/etc/postfix/server.key"
@@ -68,7 +72,8 @@
     changed_when: False
 
   - name: Generate self-signed client certificate
-    local_action: shell openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
+    command: openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
+    delegate_to: localhost
     when: not ccertstat.stat.exists
 
   - name: Copy client certificat
@@ -80,5 +85,8 @@
       "{{ansible_hostname}}.pem": "client.pem"
 
   - name: Cleanup
-    local_action: file dest="{{ workdir }}" state=absent
+    file:
+      dest: "{{ workdir }}"
+      state: absent
     changed_when: False
+    delegate_to: localhost

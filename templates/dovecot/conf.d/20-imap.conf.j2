@@ -6,7 +6,7 @@
 ## IMAP specific settings
 ##
 
-{% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
+{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 # If nothing happens for this long while client is IDLEing, move the connection
 # to imap-hibernate process and close the old imap process. This saves memory,
 # because connections use very little memory in imap-hibernate process. The

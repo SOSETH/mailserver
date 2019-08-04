@@ -82,7 +82,7 @@ service imap {
 {% endif %}
 }
 
-{% if mailserver_dove_version.stdout|version_compare('2.2.19', '>=') %}
+{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
     user = {{ mailserver_mailbox_user }}

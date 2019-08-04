@@ -25,6 +25,7 @@
     shell: cat '{{ mailserver_replication_user_home }}/.ssh/id_rsa.pub'
     register: sshkey
     changed_when: False
+    check_mode: False
 
   - name: Copy ssh forced command script
     become: True
@@ -48,15 +49,7 @@
     known_hosts:
       path: '{{ mailserver_replication_user_home }}/.ssh/known_hosts'
       name: "{{ item }}"
-      key: "{{ item }},{{ hostvars[item]['ansible_default_ipv4']['address'] }} ssh-ed25519 {{ hostvars[item]['ansible_ssh_host_key_ed25519_public'] }}"
-    with_items: "{{ groups[mailserver_group] }}"
-
-  - name: Add hosts' public key to known hosts (IPv6)
-    become: True
-    known_hosts:
-      path: '{{ mailserver_replication_user_home }}/.ssh/known_hosts'
-      name: "{{ item }}"
-      key: "{{ item }},{{ hostvars[item]['ansible_default_ipv6']['address'] }} ssh-ed25519 {{ hostvars[item]['ansible_ssh_host_key_ed25519_public'] }}"
+      key: "{{ item }},{{ hostvars[item]['ansible_default_ipv4']['address'] }},{{ hostvars[item]['ansible_default_ipv6']['address'] }} ssh-ed25519 {{ hostvars[item]['ansible_ssh_host_key_ed25519_public'] }}"
     with_items: "{{ groups[mailserver_group] }}"
 
   - name: Fix replication user SSH file permissions
