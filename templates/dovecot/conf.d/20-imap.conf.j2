@@ -11,7 +11,7 @@
 # to imap-hibernate process and close the old imap process. This saves memory,
 # because connections use very little memory in imap-hibernate process. The
 # downside is that recreating the imap process back uses some resources.
-imap_hibernate_timeout = 600
+imap_hibernate_timeout = 600s
 {% endif %}
 
 # Maximum IMAP command line length. Some clients generate very long command

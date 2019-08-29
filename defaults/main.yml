@@ -5,11 +5,24 @@
 mailserver_behind_proxy: True
 mailserver_proxy_name: 192.33.91.97
 mailserver_proxy_port: 26
+
+# Rate limis
+mailserver_message_size_limit: 52428800 # 50 MB
+mailserver_connection_rate_limit: 30
+mailserver_connection_count_limit: 10
+mailserver_recipient_limit: 10
+
 # Which host does this thing run on?
 mailserver_hostname: "mail.test.example.com"
 # How is the primary (e.g. where each user automatically gets user@domain)
 # domain called?
 mailserver_domain: "test.example.com"
+mailserver_local_domain: "{{ mailserver_domain }}"
+mailserver_local_destinations:
+  - "$myhostname"
+  - "localhost.$mydomain"
+  - "localhost"
+  - "$mydomain"
 
 # How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
