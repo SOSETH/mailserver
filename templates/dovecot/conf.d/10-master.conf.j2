@@ -50,6 +50,12 @@ service pop3-login {
   }
 }
 
+#service submission-login {
+#  inet_listener submission {
+    #port = 587
+#  }
+#}
+
 service lmtp {
   unix_listener /var/spool/postfix/private/dovecot-lmtp {
    group = postfix
@@ -81,6 +87,11 @@ service imap-hibernate {
   }
 }
 {% endif %}
+
+#service submission {
+#  # Max. number of SMTP Submission processes (connections)
+#  #process_limit = 1024
+#}
 
 service pop3 {
   # Max. number of POP3 processes (connections)
@@ -133,3 +144,17 @@ service auth-worker {
 #    #group = 
 #  }
 #}
+
+service stats {
+  unix_listener stats-reader {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+
+  unix_listener stats-writer {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+}

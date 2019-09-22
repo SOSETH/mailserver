@@ -46,11 +46,11 @@ ssl_key = </etc/postfix/server.key
 # auth_ssl_username_from_cert=yes.
 #ssl_cert_username_field = commonName
 
-# DH parameters length to use.
-ssl_dh_parameters_length = {{ mailserver_ssl_dhparam_len }}
+# DH parameters to use.
+ssl_dh = </etc/postfix/dh-2048.pem
 
-# SSL protocols to use
-ssl_protocols = {{ mailserver_ssl_tlsver }}
+# Minimal SSL protocol version to use
+ssl_min_protocol = {{ mailserver_ssl_tlsver_min }}
 
 # SSL ciphers to use
 ssl_cipher_list = {{ mailserver_ssl_tlsciphers }}
@@ -61,9 +61,7 @@ ssl_prefer_server_ciphers = no
 # SSL crypto device to use, for valid values run "openssl engine"
 #ssl_crypto_device =
 
-{% if mailserver_dove_version.stdout is version('2.2.14', '>=') %}
 # SSL extra options. Currently supported options are:
-#   no_compression - Disable compression.
-# CRIME/BREACH/... Do I need to say more? This is still not active per default...
-ssl_options = no_compression
-{% endif %}
+#   compression - Enable compression.
+#   no_ticket - Disable SSL session tickets.
+#ssl_options =
