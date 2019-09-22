@@ -80,13 +80,11 @@ service imap {
   process_limit = 1024
 }
 
-{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
     user = dovecot
   }
 }
-{% endif %}
 
 #service submission {
 #  # Max. number of SMTP Submission processes (connections)

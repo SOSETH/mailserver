@@ -6,13 +6,11 @@
 ## IMAP specific settings
 ##
 
-{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 # If nothing happens for this long while client is IDLEing, move the connection
 # to imap-hibernate process and close the old imap process. This saves memory,
 # because connections use very little memory in imap-hibernate process. The
 # downside is that recreating the imap process back uses some resources.
 imap_hibernate_timeout = 600s
-{% endif %}
 
 # Maximum IMAP command line length. Some clients generate very long command
 # lines with huge mailboxes, so you may need to raise this if you get

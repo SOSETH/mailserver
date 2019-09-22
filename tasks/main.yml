@@ -117,13 +117,6 @@
   - name: Handle TLS
     include: tls.yml
 
-  - name: Load dovecot version
-    become: True
-    command: dovecot --version
-    register: mailserver_dove_version
-    changed_when: False
-    check_mode: False
-
   - name: Configure dovecot
     become: True
     template:
