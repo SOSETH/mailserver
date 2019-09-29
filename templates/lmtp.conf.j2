@@ -6,6 +6,6 @@ frontend lmtp-front
 backend lmtp-back
     mode tcp
 {% for item in mailserver_mailman_hosts %}
-    server {{ item.name }} {{ item.dns }}:{{ item.port }} ssl crt /etc/haproxy/lmtp-cl-full.pem ca-file /etc/haproxy/lmtp-ca.crt verify required check
+    server {{ item.name }} {{ item.dns }}:{{ item.port }} ssl crt /etc/haproxy/lmtp-cl-full.pem ca-file /etc/haproxy/lmtp-ca.crt verify required check inter 300s
 {% endfor %}
 
