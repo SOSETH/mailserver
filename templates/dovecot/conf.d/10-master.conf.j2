@@ -39,7 +39,7 @@ service imap-login {
   #vsz_limit = $default_vsz_limit
 }
 
-# POP3 enabled in this role for legacy reasons...
+{% if mailserver_enable_pop3 %}
 service pop3-login {
   inet_listener pop3 {
     port = 110
@@ -49,6 +49,7 @@ service pop3-login {
     ssl = yes
   }
 }
+{% endif %}
 
 #service submission-login {
 #  inet_listener submission {
@@ -91,10 +92,12 @@ service imap-hibernate {
 #  #process_limit = 1024
 #}
 
+{% if mailserver_enable_pop3 %}
 service pop3 {
   # Max. number of POP3 processes (connections)
   process_limit = 128
 }
+{% endif %}
 
 service auth {
   # auth_socket_path points to this userdb socket by default. It's typically

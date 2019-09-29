@@ -110,6 +110,8 @@ mailserver_dkim_domains:
       -----END RSA PRIVATE KEY-----
 
 
+# Do you really need POP3?
+mailserver_enable_pop3: False
 
 ################################################################################
 ################## Things you probably do not need to change ###################
@@ -129,8 +131,10 @@ mailserver_ssl_dhparam_len: 2048
 mailserver_tls_base: "/usr/share/ca-certificates/mozilla"
 # Do we have a real cert (e.g. in ansible vault)
 mailserver_have_cert: False
+
 ################################################################################
 ################################# DO NOT TOUCH #################################
 ################################################################################
+
 mailserver_have_antispam: False
 mailserver_have_mailman: False
