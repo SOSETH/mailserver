@@ -83,7 +83,9 @@ service imap {
 
 service imap-hibernate {
   unix_listener imap-hibernate {
-    user = dovecot
+    user = {{ mailserver_mailbox_user }}
+    group = dovecot
+    mode = 0660
   }
 }
 
