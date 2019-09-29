@@ -12,6 +12,6 @@ dbname = {{ mailserver_db_mysql_db }}
 
 # This is similar to mysql-aliases. Since the function cannot return NULL howerver,
 # we can skip the outer select.
-query = SELECT getMailboxDelivery('%u', '{{ mailserver_domain }}');
+query = SELECT getMailboxDelivery('%u', '{{ mailserver_local_domain }}');
 
 require_result_set = no
