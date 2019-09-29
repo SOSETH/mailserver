@@ -39,7 +39,7 @@ service imap-login {
   #vsz_limit = $default_vsz_limit
 }
 
-# POP3 enabled in this role for legacy reasons...
+{% if mailserver_enable_pop3 %}
 service pop3-login {
   inet_listener pop3 {
     port = 110
@@ -49,6 +49,13 @@ service pop3-login {
     ssl = yes
   }
 }
+{% endif %}
+
+#service submission-login {
+#  inet_listener submission {
+    #port = 587
+#  }
+#}
 
 service lmtp {
   unix_listener /var/spool/postfix/private/dovecot-lmtp {
@@ -74,18 +81,25 @@ service imap {
   process_limit = 1024
 }
 
-{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
-    user = dovecot
+    user = {{ mailserver_mailbox_user }}
+    group = dovecot
+    mode = 0660
   }
 }
-{% endif %}
 
+#service submission {
+#  # Max. number of SMTP Submission processes (connections)
+#  #process_limit = 1024
+#}
+
+{% if mailserver_enable_pop3 %}
 service pop3 {
   # Max. number of POP3 processes (connections)
   process_limit = 128
 }
+{% endif %}
 
 service auth {
   # auth_socket_path points to this userdb socket by default. It's typically
@@ -133,3 +147,17 @@ service auth-worker {
 #    #group = 
 #  }
 #}
+
+service stats {
+  unix_listener stats-reader {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+
+  unix_listener stats-writer {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
+}

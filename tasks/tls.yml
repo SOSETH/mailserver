@@ -11,25 +11,14 @@
     changed_when: False
     delegate_to: localhost
 
-  - name: Check if DH parameters exist
-    become: True
-    stat: path="/etc/postfix/dh-2048.pem"
-    register: dhfile
-    changed_when: False
-
-  - name: Generate DH parameters locally
-    command: openssl dhparam -outform PEM -out "{{ workdir }}/dh-{{ item }}.pem" {{ item }}
-    delegate_to: localhost
-    when: not dhfile.stat.exists
-    with_items:
-      - 2048
-
   - name: Copy DH parameters to server
     become: True
-    copy: src="{{ workdir }}/dh-{{ item }}.pem" dest="/etc/postfix/dh-{{ item }}.pem" owner=root group=postfix mode=0640
-    when: not dhfile.stat.exists
-    with_items:
-      - 2048
+    copy:
+      src: "ffdhe2048.pem"
+      dest: "/etc/postfix/dh-2048.pem"
+      owner: root
+      group: postfix
+      mode: 0640
 
   - name: Check if SSL certificate exists
     become: True
@@ -76,7 +65,7 @@
     delegate_to: localhost
     when: not ccertstat.stat.exists
 
-  - name: Copy client certificat
+  - name: Copy client certificate
     become: True
     copy: src={{ workdir }}/{{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
     when: not ccertstat.stat.exists

@@ -59,14 +59,14 @@ mailbox_transport_maps = mysql:/etc/postfix/mysql-transport.cf
 smtp_tls_CApath = {{ mailserver_tls_base }}
 
 # We need SSL certs. Replace the dummy certs with real ones in prod!
-smtpd_tls_cert_file = /etc/postfix/server.pem
-smtpd_tls_key_file = /etc/postfix/server.key
+smtpd_tls_cert_file = {{ mailserver_ssl_cert }}
+smtpd_tls_key_file = {{ mailserver_ssl_key }}
 
 # Present self-signed client certificate when asked. This (in theory) allows
 # remote servers to 'sticky' this client. Exchange does this per default, so it
 # should be safe...
-smtp_tls_cert_file = /etc/postfix/client.pem
-smtp_tls_key_file = /etc/postfix/client.key
+smtp_tls_cert_file = {{ mailserver_ssl_client_cert }}
+smtp_tls_key_file = {{ mailserver_ssl_client_key }}
 
 # Ask for client cert (does not matter if none is provided)
 smtpd_tls_ask_ccert = yes
@@ -110,6 +110,8 @@ smtp_tls_security_level = may
 smtp_dns_support_level = dnssec
 smtp_tls_security_level = dane
 {% endif %}
+smtpd_tls_loglevel = 1
+smtp_tls_loglevel = 1
 
 # Due to historic reasons, Postfix only uses LDAP to resolve users. To
 # actually check their credentials, we need SASL, which is used as a

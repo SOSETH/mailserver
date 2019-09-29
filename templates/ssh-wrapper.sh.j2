@@ -11,4 +11,4 @@
 
 # :set megaquotemode
 USER="$(echo "$SSH_ORIGINAL_COMMAND" | sed 's/doveadm dsync-server -u//g')"
-exec doveadm dsync-server -u"$USER"
+exec doveadm -o mail_plugins= dsync-server -u"$USER"

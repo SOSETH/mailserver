@@ -11,12 +11,22 @@ mailserver_hostname: "mail.test.example.com"
 # domain called?
 mailserver_domain: "test.example.com"
 
+mailserver_ssl_cert: "/etc/postfix/server.pem"
+mailserver_ssl_key: "/etc/postfix/server.key"
+mailserver_ssl_client_cert: "/etc/postfix/client.pem"
+mailserver_ssl_client_key: "/etc/postfix/client.key"
+mailserver_dovecot_ssl_cert: "{{ mailserver_ssl_cert }}"
+mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
+
 # How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
 # SASL should not be needed to authenticate users against a modern LDAP!
 mailserver_dove_sasl_bind: "no"
 mailserver_dove_sasl_mech: ""
 mailserver_dove_sasl_realm: ""
+# Dovecot can optinally provide GSSAPI support for Postfix
+mailserver_use_gssapi: False
+mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 # Enforcing TLS is probably a good idea, depending on your LDAP setup
 mailserver_ldap_tls: False
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
@@ -110,6 +120,8 @@ mailserver_dkim_domains:
       -----END RSA PRIVATE KEY-----
 
 
+# Do you really need POP3?
+mailserver_enable_pop3: False
 
 ################################################################################
 ################## Things you probably do not need to change ###################
@@ -117,7 +129,8 @@ mailserver_dkim_domains:
 
 # Ciphers in OpenSSL format, see https://mozilla.github.io/server-side-tls/ssl-config-generator/ for sensible recommondations
 mailserver_ssl_tlsver: "TLSv1.2"
-mailserver_ssl_tlsciphers: "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS"
+mailserver_ssl_tlsver_min: "TLSv1.2"
+mailserver_ssl_tlsciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
 # If postfix is at least 3.2, it can support more than 1 curve. For postfix older
 # than 3.2, we use tls_eecdh_ultra_curve which is secp384r1.
 mailserver_ssl_eccurves: ['prime256v1', 'secp521r1', 'secp384r1']
@@ -128,8 +141,10 @@ mailserver_ssl_dhparam_len: 2048
 mailserver_tls_base: "/usr/share/ca-certificates/mozilla"
 # Do we have a real cert (e.g. in ansible vault)
 mailserver_have_cert: False
+
 ################################################################################
 ################################# DO NOT TOUCH #################################
 ################################################################################
+
 mailserver_have_antispam: False
 mailserver_have_mailman: False
