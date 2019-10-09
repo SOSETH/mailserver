@@ -3,8 +3,9 @@
 ################################################################################
 
 mailserver_behind_proxy: True
-mailserver_proxy_name: 192.33.91.97
-mailserver_proxy_port: 26
+# hostname, hostname:port, [hostname]:port, [hostaddress] or [hostaddress]:port
+# The form [hostname] turns off MX lookups
+mailserver_proxy: ""
 
 # Rate limis
 mailserver_message_size_limit: 52428800 # 50 MB

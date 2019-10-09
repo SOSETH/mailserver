@@ -3,7 +3,7 @@
 ############################################################################
 
 {% if mailserver_behind_proxy %}
-relayhost = [{{ mailserver_proxy_name }}]:{{ mailserver_proxy_port }}
+relayhost = {{ mailserver_proxy }}
 {% endif %}
 
 # Don't crash on Debian stretch
