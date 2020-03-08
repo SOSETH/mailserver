@@ -67,11 +67,16 @@
 
   - name: Copy client certificate
     become: True
-    copy: src={{ workdir }}/{{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
+    copy:
+      src: "{{ workdir }}/{{ ansible_hostname }}.{{ item }}"
+      dest: "/etc/postfix/{{ ansible_hostname}}.{{ item }}"
+      owner: postfix
+      group: root
+      mode: 0660
     when: not ccertstat.stat.exists
-    with_dict:
-      "{{ansible_hostname}}.key": "client.key"
-      "{{ansible_hostname}}.pem": "client.pem"
+    with_items:
+      - 'key'
+      - 'pem'
 
   - name: Cleanup
     file:
