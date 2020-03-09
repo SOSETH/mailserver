@@ -201,6 +201,7 @@ smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authent
   reject_multi_recipient_bounce, reject_non_fqdn_helo_hostname, reject_invalid_helo_hostname, permit
 {% endif %}
 
+{% if mailserver_have_dkim %}
 # DKIM is implemented by 'miltering' mail, that is sending mail through an external processing
 # script. We could also insert some DKIM tool into the LMTP pipeline, but this approache seems
 # to be more clean.
@@ -208,6 +209,7 @@ milter_default_action = accept
 milter_protocol   = 6
 smtpd_milters     = inet:127.0.0.1:42420
 non_smtpd_milters = inet:127.0.0.1:42420
+{% endif %}
 
 {% if ansible_local['mailserver_have_antispam']|default(False) %}
 # Pass incoming messages through amavis for virus checks
