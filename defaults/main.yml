@@ -7,6 +7,10 @@ mailserver_behind_proxy: True
 # The form [hostname] turns off MX lookups
 mailserver_proxy: ""
 
+# Proxy server hostnames which are allowed to submit unauthenticated mail.
+# All other hosts have to authenticate to be accepted.
+mailserver_allowed_proxies: []
+
 # Rate limis
 mailserver_message_size_limit: 52428800 # 50 MB
 mailserver_connection_rate_limit: 30
