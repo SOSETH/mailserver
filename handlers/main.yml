@@ -7,6 +7,12 @@
       state: restarted
       daemon_reload: yes
 
+  - name: rebuild proxy map
+    become: True
+    command: postmap /etc/postfix/allowed_proxies
+    notify:
+      - restart postfix
+
   - name: restart dovecot
     become: True
     systemd:

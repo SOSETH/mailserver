@@ -116,6 +116,19 @@
       - restart postfix
     tags: postfix
 
+  - name: Configure allowed proxy map
+    become: True
+    template:
+      src: postfix/allowed_proxies.j2
+      dest: /etc/postfix/allowed_proxies
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - rebuild proxy map
+    tags:
+      - postfix
+
   - name: Handle TLS
     include: tls.yml
 
