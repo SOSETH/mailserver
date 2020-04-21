@@ -24,8 +24,7 @@
 # options. The paths listed here are for configure --prefix=/usr
 # --sysconfdir=/etc --localstatedir=/var
 
-# Enable installed protocols
-!include_try /usr/share/dovecot/protocols.d/*.protocol
+protocols = imap lmtp sieve {{ 'pop3' if mailserver_enable_pop3 else '' }}
 
 # Listen everywhere
 listen = *, ::
