@@ -103,6 +103,8 @@ mailserver_replication_user_home: "{{ mailserver_mailbox_home }}"
 # here
 mailserver_mailbox_home: /var/mail
 
+mailserver_have_dkim: True
+
 # DKIM keys. This is an example throwaway key. You should probably define this
 # in an ansible vault.
 mailserver_dkim_domains:
