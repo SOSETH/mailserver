@@ -10,6 +10,7 @@
       state: directory
     changed_when: False
     delegate_to: localhost
+    check_mode: False
 
   - name: Copy DH parameters to server
     become: True
@@ -63,6 +64,7 @@
   - name: Generate self-signed client certificate
     command: openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
     delegate_to: localhost
+    check_mode: False
     when: not ccertstat.stat.exists
 
   - name: Copy client certificate
