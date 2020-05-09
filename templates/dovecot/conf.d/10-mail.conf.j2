@@ -174,7 +174,10 @@ namespace inbox {
 # methods. NFS users: flock doesn't work, remember to change mmap_disable.
 #lock_method = fcntl
 
-# Directory in which LDA/LMTP temporarily stores incoming mails >128 kB.
+# Directory where mails can be temporarily stored. Usually it's used only for
+# mails larger than >= 128 kB. It's used by various parts of Dovecot, for
+# example LDA/LMTP while delivering large mails or zlib plugin for keeping
+# uncompressed mails.
 #mail_temp_dir = /tmp
 
 # Valid UID range for users, defaults to 500 and above. This is mostly
@@ -240,19 +243,6 @@ mailbox_list_index = yes
 # not, because most of the mailbox accesses will open INBOX anyway.
 #mailbox_list_index_include_inbox = no
 
-# How many slow mail accesses sorting can perform before it returns failure.
-# With IMAP the reply is: NO [LIMIT] Requested sort would have taken too long.
-# The untagged SORT reply is still returned, but it's likely not correct.
-#mail_sort_max_read_count = 0
-
-protocol !indexer-worker {
-  # If folder vsize calculation requires opening more than this many mails from
-  # disk (i.e. mail sizes aren't in cache already), return failure and finish
-  # the calculation via indexer process. Disabled by default. This setting must
-  # be 0 for indexer-worker processes.
-  #mail_vsize_bg_after_count = 0
-}
-
 # The minimum number of mails in a mailbox before updates are done to cache
 # file. This allows optimizing Dovecot's behavior to do less disk writes at
 # the cost of more disk reads.
@@ -278,6 +268,19 @@ protocol !indexer-worker {
 # How often to scan for stale temporary files and delete them (0 = never).
 # These should exist only after Dovecot dies in the middle of saving mails.
 #mail_temp_scan_interval = 1w
+
+# How many slow mail accesses sorting can perform before it returns failure.
+# With IMAP the reply is: NO [LIMIT] Requested sort would have taken too long.
+# The untagged SORT reply is still returned, but it's likely not correct.
+#mail_sort_max_read_count = 0
+
+protocol !indexer-worker {
+  # If folder vsize calculation requires opening more than this many mails from
+  # disk (i.e. mail sizes aren't in cache already), return failure and finish
+  # the calculation via indexer process. Disabled by default. This setting must
+  # be 0 for indexer-worker processes.
+  #mail_vsize_bg_after_count = 0
+}
 
 ##
 ## Maildir-specific settings

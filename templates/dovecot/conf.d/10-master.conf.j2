@@ -133,7 +133,9 @@ service auth {
 }
 
 service auth-worker {
-  # We do not need access to /etc/shadow, so this does not need to run as root
+  # Auth worker process is run as root by default, so that it can access
+  # /etc/shadow. If this isn't necessary, the user should be changed to
+  # $default_internal_user.
   user = $default_internal_user
 }
 
