@@ -51,6 +51,10 @@ mailserver_dovecot_sasl_mech: "gssapi"
 # In case of kerberos can be left empty
 mailserver_dovecot_sasl_realm: ""
 
+mailserver_postfix_sasl_bind: True
+mailserver_postfix_sasl_mech: "gssapi"
+mailserver_postfix_keytab_location: /etc/postfix/kerberos.keytab
+
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 

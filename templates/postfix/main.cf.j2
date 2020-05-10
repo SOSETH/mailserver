@@ -243,6 +243,7 @@ local_recipient_maps = proxy:ldap:/etc/postfix/ldap-map.cf
 # This will be required for mailman and is useful for custom sieve scripts
 recipient_delimiter = +
 
+import_environment = KRB5CCNAME=FILE:/run/postfix/krb5_ccache
 
 # Disabled features that are in the main config file per default
 # relay_recipient_maps = hash:/etc/postfix/relay_recipients

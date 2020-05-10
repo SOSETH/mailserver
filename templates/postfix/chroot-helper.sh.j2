@@ -1,0 +1,15 @@
+#!/bin/bash
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+# Add some files to postfix's chroot
+CHROOT=/var/spool/postfix
+if [ -d "${CHROOT}" ] ; then
+    mkdir -p "${CHROOT}"
+fi
+
+{% if mailserver_postfix_sasl_bind %}
+mkdir -p "${CHROOT}/run/postfix" || /bin/true
+mount --bind /run/postfix "${CHROOT}/run/postfix" || /bin/true
+{% endif %}

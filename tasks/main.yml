@@ -114,6 +114,63 @@
       - restart postfix
     tags: postfix
 
+  - name: Upload postfix startup chroot helper script
+    become: True
+    when: mailserver_postfix_sasl_bind
+    template:
+      src: postfix/chroot-helper.sh.j2
+      dest: /etc/postfix/chroot-helper.sh
+      owner: root
+      group: root
+      mode: 0750
+    notify: restart postfix
+
+  - name: Create postfix startup dropin directory
+    become: True
+    when: mailserver_postfix_sasl_bind
+    file:
+      path: /etc/systemd/system/postfix@.service.d
+      state: directory
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Upload postfix startup dropin
+    become: True
+    when: mailserver_postfix_sasl_bind
+    template:
+      src: postfix/dropin.conf.j2
+      dest: /etc/systemd/system/postfix@.service.d/ansible.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart postfix
+
+  - name: Upload kerberos helper for SASL/GSSAPI binds
+    become: True
+    when: mailserver_postfix_sasl_bind
+    template:
+      src: postfix/krb-helper.sh.j2
+      dest: /etc/postfix/krb-helper.sh
+      owner: root
+      group: root
+      mode: 0744
+    notify: restart postfix
+
+  - name: Upload kereros helper service/timer
+    become: True
+    when: mailserver_postfix_sasl_bind
+    copy:
+      src: "{{ item[0] }}"
+      dest: "{{ item[1] }}"
+      owner: root
+      group: root
+      mode: 0644
+    loop:
+      - ['postfix/postfix-krbhelper.service', '/etc/systemd/system/postfix-krbhelper.service']
+      - ['postfix/postfix-krbhelper.timer', '/etc/systemd/system/postfix-krbhelper.timer']
+    notify: restart postfix
+
   - name: Configure allowed proxy map
     become: True
     template:

@@ -1,0 +1,11 @@
+{% if mailserver_postfix_sasl_bind %}
+[Unit]
+Requires=postfix-krbhelper.service
+Requires=postfix-krbhelper.timer
+After=postfix-krbhelper.service
+
+{% endif %}
+[Service]
+ExecStartPre=
+ExecStartPre=/usr/lib/postfix/configure-instance.sh %i
+ExecStartPre=/etc/postfix/chroot-helper.sh
