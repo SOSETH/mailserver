@@ -65,6 +65,9 @@ mailserver_ldap_usermailattr: "mail"
 mailserver_use_gssapi: False
 mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 
+# Use PAM for passdb lookups instead of LDAP binds
+mailserver_dovecot_ldap_passdb_use_pam: False
+
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
 mailserver_dovecot_greeting: "Dovecot ready."
 
