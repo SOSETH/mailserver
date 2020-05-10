@@ -213,6 +213,31 @@
       mode: 0644
     notify: restart dovecot
 
+  - name: Upload kerberos helper for SASL/GSSAPI binds
+    become: True
+    when: mailserver_dovecot_sasl_bind
+    template:
+      src: dovecot/krb-helper.sh.j2
+      dest: /etc/dovecot/krb-helper.sh
+      owner: root
+      group: root
+      mode: 0744
+    notify: restart dovecot
+
+  - name: Upload kereros helper service/timer
+    become: True
+    when: mailserver_dovecot_sasl_bind
+    copy:
+      src: "{{ item[0] }}"
+      dest: "{{ item[1] }}"
+      owner: root
+      group: root
+      mode: 0644
+    loop:
+      - ['dovecot/dovecot-krbhelper.service', '/etc/systemd/system/dovecot-krbhelper.service']
+      - ['dovecot/dovecot-krbhelper.timer', '/etc/systemd/system/dovecot-krbhelper.timer']
+    notify: restart dovecot
+
   # This is recommended (ahead-of-time compile) but buggy ATM :(
   #- name: Compile sieve scripts
   #  become: True

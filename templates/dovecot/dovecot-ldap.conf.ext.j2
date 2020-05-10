@@ -36,11 +36,11 @@ dnpass = {{ mailserver_ldap_bindpwd }}
 
 # Use SASL binding instead of the simple binding. Note that this changes
 # ldap_version automatically to be 3 if it's lower.
-sasl_bind = "{{mailserver_dove_sasl_bind}}"
+sasl_bind = "{{ 'yes' if mailserver_dovecot_sasl_bind else 'no' }}"
 # SASL mechanism name to use.
-sasl_mech = "{{mailserver_dove_sasl_mech}}"
+sasl_mech = "{{ mailserver_dovecot_sasl_mech }}"
 # SASL realm to use.
-sasl_realm = "{{mailserver_dove_sasl_realm}}"
+sasl_realm = "{{ mailserver_dovecot_sasl_realm|upper }}"
 # SASL authorization ID, ie. the dnpass is for this "master user", but the
 # dn is still the logged in user. Normally you want to keep this empty.
 #sasl_authz_id =

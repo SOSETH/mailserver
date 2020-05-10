@@ -1,0 +1,10 @@
+[Unit]
+After=local-fs.target network.target
+Description=Refresh Dovecot's Kerberos cache
+
+[Service]
+Type=oneshot
+WorkingDirectory=/etc/dovecot
+ExecStart=/etc/dovecot/krb-helper.sh
+User=root
+Group=root

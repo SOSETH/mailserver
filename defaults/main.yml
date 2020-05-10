@@ -45,11 +45,11 @@ mailserver_ldap_binddn: ""
 mailserver_ldap_bindpwd: ""
 
 # Use SASL to bind to LDAP instead of simple bind
-mailserver_dove_sasl_bind: "no"
+mailserver_dovecot_sasl_bind: False
 # SASL mechanism to use for binding ('gssapi' for kerberos)
-mailserver_dove_sasl_mech: "gssapi"
-# In case of kerberos your kerberos realm
-mailserver_dove_sasl_realm: ""
+mailserver_dovecot_sasl_mech: "gssapi"
+# In case of kerberos can be left empty
+mailserver_dovecot_sasl_realm: ""
 
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
@@ -66,7 +66,7 @@ mailserver_use_gssapi: False
 mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
-mailserver_dove_greeting: "Dovecot ready."
+mailserver_dovecot_greeting: "Dovecot ready."
 
 # Where is the database (see role mail-mock for an example) located?
 # DO NOT USE LOCALHOST!! MySQL will be "smart" and try to use the socket which

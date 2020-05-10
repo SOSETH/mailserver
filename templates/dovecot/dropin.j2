@@ -1,10 +1,16 @@
 ############################################################################
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
+{% if mailserver_dovecot_sasl_bind %}
+[Unit]
+Requires=dovecot-krbhelper.service
+Requires=dovecot-krbhelper.timer
+After=dovecot-krbhelper.service
+{% endif %}
 
+[Service]
 # Per spec, /var/run is not necessarily persistent. Therefore we need to
 # to create the sieve socket directory before each launch. If it already
 # exists the failure to create it will be ignored ('-'). Since the run 
 # directory does not even exist at this point we need the '-p'
-[Service]
 ExecStartPre=-/bin/mkdir -p /var/run/dovecot/sieve-pipe

@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh Dovecot's kerberos cache regularly
+
+[Timer]
+OnUnitActiveSec=2h
+
+[Install]
+WantedBy=timers.target
