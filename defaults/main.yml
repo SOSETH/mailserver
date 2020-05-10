@@ -17,7 +17,6 @@ mailserver_connection_rate_limit: 30
 mailserver_connection_count_limit: 10
 mailserver_recipient_limit: 10
 
-# Which host does this thing run on?
 mailserver_hostname: "mail.test.example.com"
 # How is the primary (e.g. where each user automatically gets user@domain)
 # domain called?
@@ -36,17 +35,22 @@ mailserver_ssl_client_key: "/etc/postfix/client.key"
 mailserver_dovecot_ssl_cert: "{{ mailserver_ssl_cert }}"
 mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
 
-# How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
-# SASL should not be needed to authenticate users against a modern LDAP!
-mailserver_dove_sasl_bind: "no"
-mailserver_dove_sasl_mech: ""
-mailserver_dove_sasl_realm: ""
-# Dovecot can optinally provide GSSAPI support for Postfix
-mailserver_use_gssapi: False
-mailserver_keytab_location: /etc/dovecot/kerberos.keytab
-# Enforcing TLS is probably a good idea, depending on your LDAP setup
+# Enforce TLS for LDAP connections
 mailserver_ldap_tls: False
+
+# To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
+# Specify a user with sufficient privileges here
+mailserver_ldap_binddn: ""
+mailserver_ldap_bindpwd: ""
+
+# Use SASL to bind to LDAP instead of simple bind
+mailserver_dove_sasl_bind: "no"
+# SASL mechanism to use for binding ('gssapi' for kerberos)
+mailserver_dove_sasl_mech: "gssapi"
+# In case of kerberos your kerberos realm
+mailserver_dove_sasl_realm: ""
+
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 
@@ -57,23 +61,10 @@ mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
 mailserver_ldap_iteratefilter: "(objectClass=posixAccount)"
 mailserver_ldap_usermailattr: "mail"
 
-# Create aliases for groups in LDAP? Not implemented for the moment!
-mailserver_ldap_grsync_enable: False
-# LDAP group listing also needs access to LDAP
-mailserver_ldap_url: ldap://127.0.0.1:389
-# To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
-# Specify a user with sufficient privileges here
-mailserver_ldap_binddn: foo
-mailserver_ldap_bindpwd: bar
-# Where are users/groups located in your LDAP?
-mailserver_ldap_grsync_userfilter: "(&(objectClass=posixAccount)(cn=?))"
-mailserver_ldap_groupfilter: "(&(objectclass=posixgroup)(cn=?))"
-mailserver_ldap_groupdn: "ou=groups,dc=test,dc=example,dc=com"
-# Which groups to synchronize
-mailserver_ldap_groups: "dummygroup1, dummygroup2"
-mailserver_ldap_memberattr: "member"
+# Enable GSSAPI authentication for users.
+mailserver_use_gssapi: False
+mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 
-# Banners. Feel free to customize
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
 mailserver_dove_greeting: "Dovecot ready."
 
