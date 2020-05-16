@@ -79,6 +79,12 @@ service imap {
 
   # Max. number of IMAP processes (connections)
   process_limit = 1024
+
+  unix_listener imap-master {
+    user = {{ mailserver_mailbox_user }}
+    group = dovecot
+    mode = 0660
+  }
 }
 
 service imap-hibernate {
