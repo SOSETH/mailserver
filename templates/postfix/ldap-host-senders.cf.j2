@@ -1,0 +1,11 @@
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+{% include './templates/postfix/ldap-conn.j2' %}
+
+search_base = cn=computers,{{ mailserver_ldap_basedn }}
+query_filter = (&(objectClass=mailSenderEntity)(|(primaryMail=%s)(sendAlias=%s)))
+special_result_attribute = member
+result_attribute = cn
+result_format = host/%s

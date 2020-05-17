@@ -163,6 +163,7 @@
     with_items:
       - ldap-aliases.cf
       - ldap-senders.cf
+      - ldap-host-senders.cf
       - ldap-vdomains.cf
       - ldap-transport.cf
       - ldap-external-send.cf

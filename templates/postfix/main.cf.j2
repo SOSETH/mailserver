@@ -130,7 +130,11 @@ smtpd_sasl_authenticated_header = yes
 
 # Check the client's sender adress to match the adresses it may actually
 # send mail for
+{% if mailserver_config_method == "ldap" %}
+smtpd_sender_login_maps = ldap:/etc/postfix/ldap-senders.cf ldap:/etc/postfix/ldap-host-senders.cf
+{% else %}
 smtpd_sender_login_maps = {{ mailserver_config_method }}:/etc/postfix/{{ mailserver_config_method }}-senders.cf
+{% endif %}
 
 message_size_limit = {{ mailserver_message_size_limit }}
 # Limit mailbox size to 500 MB. This is not actually used, but Postfix has
