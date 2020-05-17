@@ -38,14 +38,15 @@ passdb {
 
 # Use SQL to override settings for users. This will accept all users, but non-
 # existing users will fail the passdb lookup so that's not an issue
+{% if mailserver_config_method == "mysql" %}
 userdb {
   driver = sql
   args = /etc/dovecot/dovecot-sql.conf.ext
   result_success = continue
 }
+{% endif %}
 
-# Second userdb. We should never reach this during normal auth, but it is
-# important for a complete output of doveadm user '*'
+# Second userdb, the actual ldap
 userdb {
   driver = ldap
   args = /etc/dovecot/dovecot-ldap.conf.ext

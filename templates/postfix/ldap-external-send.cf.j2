@@ -5,5 +5,6 @@
 {% include './templates/postfix/ldap-conn.j2' %}
 
 search_base = {{ mailserver_ldap_basedn }}
-query_filter = {{ mailserver_ldap_usermailfilter }}
-result_attribute = {{ mailserver_ldap_usermailattr }}
+query_filter = (&(|(primaryMail=%s)(sendAlias=%s))(canSendExternally=FALSE))
+result_attribute = canSendExternally
+result_format = local_only

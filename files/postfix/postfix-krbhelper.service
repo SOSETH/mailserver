@@ -1,0 +1,10 @@
+[Unit]
+After=local-fs.target network.target
+Description=Refresh Postfix's Kerberos cache
+
+[Service]
+Type=oneshot
+WorkingDirectory=/etc/postfix
+ExecStart=/etc/postfix/krb-helper.sh
+User=root
+Group=root

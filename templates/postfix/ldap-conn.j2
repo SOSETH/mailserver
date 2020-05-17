@@ -1,0 +1,19 @@
+version = 3
+{% if mailserver_ldap_tls %}
+tls_require_cert = yes
+server_host = ldaps://{{ mailserver_ldap_servers|join(' ldaps://') }}
+{% if mailserver_ldap_cert_file is defined %}
+tls_ca_cert_file = {{ mailserver_ldap_cert_file }}
+{% endif %}
+{% else %}
+server_host = {{ mailserver_ldap_servers|join(' ') }}
+{% endif %}
+
+{% if mailserver_postfix_sasl_bind %}
+bind = sasl
+sasl_mechs = gssapi
+{% else %}
+bind = yes
+bind_dn = {{ mailserver_ldap_binddn }}
+bind_pw = {{ mailserver_ldap_bindpwd }}
+{% endif %}

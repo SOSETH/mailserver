@@ -35,9 +35,15 @@ mailserver_ssl_client_key: "/etc/postfix/client.key"
 mailserver_dovecot_ssl_cert: "{{ mailserver_ssl_cert }}"
 mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
 
+# Where are aliases/vdomains/routes stored? Default is mysql, but ldap is also possible
+mailserver_config_method: "mysql"
+
 mailserver_ldap_servers: ["127.0.0.1"]
 # Enforce TLS for LDAP connections
 mailserver_ldap_tls: False
+# If using encryption ... SSL on port 636 or STARTTLS on 389
+mailserver_ldap_dovecot_ssl: False
+# Define mailserver_ldap_cert_file if you have a private CA
 
 # To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
 # Specify a user with sufficient privileges here
@@ -51,15 +57,24 @@ mailserver_dovecot_sasl_mech: "gssapi"
 # In case of kerberos can be left empty
 mailserver_dovecot_sasl_realm: ""
 
-# BaseDN. Every user in this ou gets an account with user@postfix_domain
-mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
+mailserver_postfix_sasl_bind: True
+mailserver_postfix_sasl_mech: "gssapi"
+mailserver_postfix_keytab_location: /etc/postfix/kerberos.keytab
 
-# LDAP filters
-mailserver_ldap_passfilter: "(cn=%n)"
-mailserver_ldap_userfilter: "(&(objectClass=posixAccount)(cn=%n))"
-mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
-mailserver_ldap_iteratefilter: "(objectClass=posixAccount)"
-mailserver_ldap_usermailattr: "mail"
+# BaseDN where accounts reside
+mailserver_ldap_basedn: "cn=accounts,dc=test,dc=example,dc=com"
+
+# BaseDN where the configuration entries are stored (e.g postfixConfiguration)
+mailserver_ldap_config_basedn: "cn=mailserver,cn=etc,dc=test,dc=example,dc=com"
+
+# Dovecot LDAP filters
+mailserver_ldap_passfilter: "(uid=%n)"
+mailserver_ldap_userfilter: "(&(objectClass=mailboxEntity)(uid=%n))"
+mailserver_ldap_iteratefilter: "(objectClass=mailboxEntity)"
+
+# Postfix LDAP filters
+mailserver_ldap_usermailfilter: "(&(objectClass=mailReceiverEntity)(primaryMail=%s))"
+mailserver_ldap_usermailattr: "primaryMail"
 
 # Enable GSSAPI authentication for users.
 mailserver_use_gssapi: False

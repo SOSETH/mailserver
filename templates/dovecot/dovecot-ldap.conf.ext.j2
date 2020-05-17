@@ -21,11 +21,19 @@
 #        by * none
 
 # Space separated list of LDAP hosts to use. host:port is allowed too.
+{% if not mailserver_ldap_dovecot_ssl %}
 hosts = "{{ mailserver_ldap_servers|join(' ') }}"
+{% else %}
+#hosts = 
+{% endif %}
 
 # LDAP URIs to use. You can use this instead of hosts list. Note that this
 # setting isn't supported by all LDAP libraries.
-#uris = 
+{% if mailserver_ldap_dovecot_ssl %}
+uris = "ldaps://{{ mailserver_ldap_servers|join(' ldaps://') }}"
+{% else %}
+#uris =
+{% endif %}
 
 # Distinguished Name - the username used to login to the LDAP server.
 # Leave it commented out to bind anonymously (useful with auth_bind=yes).
@@ -46,11 +54,16 @@ sasl_realm = "{{ mailserver_dovecot_sasl_realm|upper }}"
 #sasl_authz_id =
 
 # Use TLS to connect to the LDAP server.
-{% if mailserver_ldap_tls %}
+{% if mailserver_ldap_tls or mailserver_ldap_dovecot_ssl %}
+{% if mailserver_ldap_tls and not mailserver_ldap_dovecot_ssl %}
 tls = yes
+{% endif %}
 # TLS options, currently supported only with OpenLDAP:
-#tls_ca_cert_file =
+{% if mailserver_ldap_cert_file is defined %}
+tls_ca_cert_file = "{{ mailserver_ldap_cert_file }}"
+{% else %}
 tls_ca_cert_dir = "{{ mailserver_tls_base }}"
+{% endif %}
 #tls_cipher_suite =
 # TLS cert/key is used only if LDAP server requires a client certificate.
 #tls_cert_file =
@@ -114,7 +127,10 @@ scope = subtree
 #
 # There are also other special fields which can be returned, see
 # http://wiki2.dovecot.org/UserDatabase/ExtraFields
-user_attrs = 
+user_attrs = =quota_rule=%{ldap:mailboxQuota}, \
+  =uid=vmail, \
+  =gid=vmail, \
+  =home={{ mailserver_mailbox_dir }}/%{ldap:uid}
 
 # Filter for user lookup. Some variables can be used (see
 # http://wiki2.dovecot.org/Variables for full list):

@@ -43,7 +43,7 @@ mydestination = {{ mailserver_local_destinations|join(', ') }}
 # Which domains are 'virtual' domains, that is domains that this machine is additionally responsible
 # for. See http://www.postfix.org/VIRTUAL_README.html#virtual_alias as for how this is supposed to
 # work.
-virtual_alias_domains = mysql:/etc/postfix/mysql-vdomains.cf
+virtual_alias_domains = {{ mailserver_config_method }}:/etc/postfix/{{ mailserver_config_method }}-vdomains.cf
 
 # Only relay mail for localhost
 mynetworks_style = host
@@ -53,7 +53,7 @@ in_flow_delay = 1s
 
 # The difference between mailbox_transport_maps and transport_maps is
 # that transport_maps will also apply when sending mails!
-mailbox_transport_maps = mysql:/etc/postfix/mysql-transport.cf
+mailbox_transport_maps = {{ mailserver_config_method }}:/etc/postfix/{{ mailserver_config_method }}-transport.cf
 
 # Path to system SSL certificate store
 smtp_tls_CApath = {{ mailserver_tls_base }}
@@ -130,7 +130,11 @@ smtpd_sasl_authenticated_header = yes
 
 # Check the client's sender adress to match the adresses it may actually
 # send mail for
-smtpd_sender_login_maps = mysql:/etc/postfix/mysql-senders.cf
+{% if mailserver_config_method == "ldap" %}
+smtpd_sender_login_maps = ldap:/etc/postfix/ldap-senders.cf ldap:/etc/postfix/ldap-host-senders.cf
+{% else %}
+smtpd_sender_login_maps = {{ mailserver_config_method }}:/etc/postfix/{{ mailserver_config_method }}-senders.cf
+{% endif %}
 
 message_size_limit = {{ mailserver_message_size_limit }}
 # Limit mailbox size to 500 MB. This is not actually used, but Postfix has
@@ -165,13 +169,22 @@ delay_warning_time=3h
 maximal_queue_lifetime=2d
 bounce_queue_lifetime=1d
 
+# submission sender restrictions
+smtpd_sender_restrictions = reject_sender_login_mismatch,
+  permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination,
+  reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_recipient_domain,
+  reject_unauth_pipelining,
+  reject
+
 {% if mailserver_behind_proxy %}
 # We're behind a forwaring proxy that does antispam. Mails therefore do not get delivered to us
 # from their original sender, therefore, we can't do DNS checks!
 
 # smtpd sender restrictions
-smtpd_sender_restrictions = reject_sender_login_mismatch,
-  permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination,
+smtpd_sender_restrictions_25 = permit_mynetworks,
+{% if mailserver_config_method == "ldap" %}  check_recipient_access ldap:/etc/postfix/ldap-external-receive.cf,
+{% endif %}
+  reject_unauth_destination,
   reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_recipient_domain,
   reject_unauth_pipelining, check_client_access hash:/etc/postfix/allowed_proxies,
   reject
@@ -179,14 +192,19 @@ smtpd_sender_restrictions = reject_sender_login_mismatch,
 # smtp destination restrictions
 # Either you're authenticated OR you are from 127.0.0.1 OR you satisfy a boatload of constraints
 # Also note that the same thing ist in master.cf without sasl restrictions
+smtpd_recipient_restrictions_25 = permit_mynetworks, reject_unknown_recipient_domain, reject_unauth_pipelining,
+  reject_unauth_destination, reject_multi_recipient_bounce, permit
+
 smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated,
   permit_mynetworks, reject_unknown_recipient_domain, reject_unauth_pipelining,
   reject_unauth_destination, reject_multi_recipient_bounce, check_client_access hash:/etc/postfix/allowed_proxies,
   reject
 {% else %}
 # smtpd sender restrictions
-smtpd_sender_restrictions = reject_sender_login_mismatch,
-  permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination,
+smtpd_sender_restrictions_25 = permit_mynetworks,
+{% if mailserver_config_method == "ldap" %}  check_recipient_access ldap:/etc/postfix/ldap-external-receive.cf,
+{% endif %}
+  reject_unauth_destination,
   reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_recipient_domain,
   reject_unauth_pipelining, permit
 
@@ -194,8 +212,15 @@ smtpd_sender_restrictions = reject_sender_login_mismatch,
 # Either you're authenticated OR you are from 127.0.0.1 OR you satisfy a boatload of constraints
 # We need to find out in prod if this is too restrictive
 # Also note that the same thing ist in master.cf without sasl restrictions
-smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated,
-  permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
+smtpd_recipient_restrictions_25 = permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
+  reject_non_fqdn_recipient, reject_non_fqdn_sender, reject_unknown_sender_domain,
+  reject_unknown_recipient_domain, reject_unauth_pipelining, reject_unauth_destination,
+  reject_multi_recipient_bounce, reject_non_fqdn_helo_hostname, reject_invalid_helo_hostname, permit
+
+smtpd_recipient_restrictions = reject_sender_login_mismatch,
+{% if mailserver_config_method == "ldap" %}  check_sender_access ldap:/etc/postfix/ldap-external-send.cf,
+{% endif %}
+  permit_sasl_authenticated, permit_mynetworks, reject_invalid_hostname, reject_non_fqdn_hostname,
   reject_non_fqdn_recipient, reject_non_fqdn_sender, reject_unknown_sender_domain,
   reject_unknown_recipient_domain, reject_unauth_pipelining, reject_unauth_destination,
   reject_multi_recipient_bounce, reject_non_fqdn_helo_hostname, reject_invalid_helo_hostname, permit
@@ -221,7 +246,7 @@ header_checks = pcre:/etc/postfix/cleanup-headers
 
 # Alias maps
 # See http://serverfault.com/a/644393/371842 as to why we need virtual_
-virtual_alias_maps = mysql:/etc/postfix/mysql-aliases.cf
+virtual_alias_maps = {{ mailserver_config_method }}:/etc/postfix/{{ mailserver_config_method }}-aliases.cf
 # Do not load normal aliases...
 alias_maps =
 
@@ -243,6 +268,13 @@ local_recipient_maps = proxy:ldap:/etc/postfix/ldap-map.cf
 # This will be required for mailman and is useful for custom sieve scripts
 recipient_delimiter = +
 
+# Create a restriction class "local_only" which can be used to limit
+# outgoing mail of some users to this domain only
+smtpd_restriction_classes = local_only, local_only_sender
+local_only = check_recipient_access hash:/etc/postfix/local_domains, reject
+local_only_sender = check_sender_access hash:/etc/postfix/local_domains, reject
+
+import_environment = KRB5CCNAME=FILE:/run/postfix/krb5_ccache
 
 # Disabled features that are in the main config file per default
 # relay_recipient_maps = hash:/etc/postfix/relay_recipients

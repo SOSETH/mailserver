@@ -1,0 +1,18 @@
+#!/bin/bash
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+set -e
+
+# Postfix is unfortunately unable to fetch kerberos tickets itsself.
+# Therefore, we invoke this script pre-startup and then every few hours to
+# ensure that the cache always contains a valid kerberos ticket.
+
+if [ ! -d "/run/postfix" ] ; then
+  mkdir -p "/run/postfix"
+fi
+
+kinit -k -t {{ mailserver_postfix_keytab_location }} -c FILE:/run/postfix/krb5_ccache smtp/{{ mailserver_hostname }}
+
+chown -R postfix /run/postfix
