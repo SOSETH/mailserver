@@ -142,6 +142,7 @@
       - dovecot.conf
       - dovecot-ldap.conf.ext
       - dovecot-sql.conf.ext
+      - ssl-keys.conf
     notify: restart dovecot
 
   - name: Install dovecot script

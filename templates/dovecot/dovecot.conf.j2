@@ -78,7 +78,7 @@ doveadm_socket_path = doveadm-server
 # Space separated list of environment variables that are preserved on Dovecot
 # startup and passed down to all of its child processes. You can also give
 # key=value pairs to always set specific settings.
-import_environment = TZ KRB5CCNAME=/run/dovecot/krb5_ccache
+import_environment = TZ KRB5CCNAME=/run/dovecot/krb5_ccache NOTIFY_SOCKET
 
 ##
 ## Dictionary server settings
@@ -99,5 +99,10 @@ import_environment = TZ KRB5CCNAME=/run/dovecot/krb5_ccache
 # first sorted by their ASCII value and parsed in that order. The 00-prefixes
 # in filenames are intended to make it easier to understand the ordering.
 !include conf.d/*.conf
+
+# Workaround for https://www.mail-archive.com/dovecot@dovecot.org/msg84549.html
+# See also https://github.com/postfixadmin/postfixadmin/issues/381
+!include_try ssl-keys.conf
+
 
 # DOES NOT INCLUDE LOCAL CONFIG!
