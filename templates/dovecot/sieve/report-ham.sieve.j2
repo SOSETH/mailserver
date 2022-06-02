@@ -2,7 +2,7 @@
 ########### Managed by ansible (role: mailserver), do not edit! ############
 ############################################################################
 
-require ["copy"];
+require ["variables", "copy", "environment"];
 
 if environment :matches "imap.mailbox" "*" {
   set "mailbox" "${1}";
@@ -12,4 +12,4 @@ if string "${mailbox}" "Trash" {
   stop;
 }
 
-redirect :copy "__spamuser_spam@{{ mailserver_domain }}";
+redirect :copy "__spamuser_ham@{{ mailserver_domain }}";
