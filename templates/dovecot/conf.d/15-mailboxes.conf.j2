@@ -53,7 +53,7 @@ namespace inbox {
     auto = subscribe
     special_use = \Drafts
   }
-{% if ansible_local['mailserver_have_antispam'] %}
+{% if ansible_local['mailserver_have_antispam']|default(False) %}
   mailbox Junk {
     auto = subscribe
     special_use = \Junk

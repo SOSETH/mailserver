@@ -1,0 +1,15 @@
+#!/bin/bash
+############################################################################
+########### Managed by ansible (role: mailserver), do not edit! ############
+############################################################################
+
+set -e
+
+# Dovecot is unfortunately unable to fetch kerberos tickets itsself.
+# Therefore, we invoke this script pre-startup and then every few hours to
+# ensure that the cache always contains a valid kerberos ticket.
+mkdir -p /run/dovecot
+
+kinit -k -t {{ mailserver_keytab_location }} -c FILE:/run/dovecot/krb5_ccache imap/{{ mailserver_hostname }}
+
+chown -R dovecot /run/dovecot/krb5_ccache

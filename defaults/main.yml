@@ -3,16 +3,30 @@
 ################################################################################
 
 mailserver_behind_proxy: True
-mailserver_proxy_name: 192.33.91.97
-mailserver_proxy_port: 26
-# Which host does this thing run on?
+# hostname, hostname:port, [hostname]:port, [hostaddress] or [hostaddress]:port
+# The form [hostname] turns off MX lookups
+mailserver_proxy: ""
+
+# Proxy server hostnames which are allowed to submit unauthenticated mail.
+# All other hosts have to authenticate to be accepted.
+mailserver_allowed_proxies: []
+
+# Rate limis
+mailserver_message_size_limit: 52428800 # 50 MB
+mailserver_connection_rate_limit: 30
+mailserver_connection_count_limit: 10
+mailserver_recipient_limit: 10
+
 mailserver_hostname: "mail.test.example.com"
 # How is the primary (e.g. where each user automatically gets user@domain)
 # domain called?
 mailserver_domain: "test.example.com"
-
-# Where are aliases/vdomains/routes stored? Default is mysql, but ldap is also possible
-mailserver_config_method: "mysql"
+mailserver_local_domain: "{{ mailserver_domain }}"
+mailserver_local_destinations:
+  - "$myhostname"
+  - "localhost.$mydomain"
+  - "localhost"
+  - "$mydomain"
 
 mailserver_ssl_cert: "/etc/postfix/server.pem"
 mailserver_ssl_key: "/etc/postfix/server.key"
@@ -21,19 +35,28 @@ mailserver_ssl_client_key: "/etc/postfix/client.key"
 mailserver_dovecot_ssl_cert: "{{ mailserver_ssl_cert }}"
 mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
 
+# Where are aliases/vdomains/routes stored? Default is mysql, but ldap is also possible
+mailserver_config_method: "mysql"
+
 # How do we connect to LDAP?
 mailserver_ldap_servers: ["127.0.0.1"]
-# SASL should not be needed to authenticate users against a modern LDAP!
-mailserver_dove_sasl_bind: "no"
-mailserver_dove_sasl_mech: ""
-mailserver_dove_sasl_realm: ""
-# Dovecot can optinally provide GSSAPI support for Postfix
-mailserver_use_gssapi: False
-mailserver_keytab_location: /etc/dovecot/kerberos.keytab
-# Enforcing TLS is probably a good idea, depending on your LDAP setup
+# Enforce TLS for LDAP connections
 mailserver_ldap_tls: False
 # If using encryption ... SSL on port 636 or STARTTLS on 389
 mailserver_ldap_dovecot_ssl: False
+
+# To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
+# Specify a user with sufficient privileges here
+mailserver_ldap_binddn: ""
+mailserver_ldap_bindpwd: ""
+
+# Use SASL to bind to LDAP instead of simple bind
+mailserver_dovecot_sasl_bind: False
+# SASL mechanism to use for binding ('gssapi' for kerberos)
+mailserver_dovecot_sasl_mech: "gssapi"
+# In case of kerberos can be left empty
+mailserver_dovecot_sasl_realm: ""
+
 # BaseDN. Every user in this ou gets an account with user@postfix_domain
 mailserver_ldap_basedn: "ou=users,dc=test,dc=example,dc=com"
 # Define mailserver_ldap_cert_file if you have a private CA
@@ -45,25 +68,15 @@ mailserver_ldap_usermailfilter: "(&(objectClass=posixAccount)(mail=%n))"
 mailserver_ldap_iteratefilter: "(objectClass=posixAccount)"
 mailserver_ldap_usermailattr: "mail"
 
-# Create aliases for groups in LDAP? Not implemented for the moment!
-mailserver_ldap_grsync_enable: False
-# LDAP group listing also needs access to LDAP
-mailserver_ldap_url: ldap://127.0.0.1:389
-# To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
-# Specify a user with sufficient privileges here
-mailserver_ldap_binddn: foo
-mailserver_ldap_bindpwd: bar
-# Where are users/groups located in your LDAP?
-mailserver_ldap_grsync_userfilter: "(&(objectClass=posixAccount)(cn=?))"
-mailserver_ldap_groupfilter: "(&(objectclass=posixgroup)(cn=?))"
-mailserver_ldap_groupdn: "ou=groups,dc=test,dc=example,dc=com"
-# Which groups to synchronize
-mailserver_ldap_groups: "dummygroup1, dummygroup2"
-mailserver_ldap_memberattr: "member"
+# Enable GSSAPI authentication for users.
+mailserver_use_gssapi: False
+mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 
-# Banners. Feel free to customize
+# Use PAM for passdb lookups instead of LDAP binds
+mailserver_dovecot_ldap_passdb_use_pam: False
+
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
-mailserver_dove_greeting: "Dovecot ready."
+mailserver_dovecot_greeting: "Dovecot ready."
 
 # Where is the database (see role mail-mock for an example) located?
 # DO NOT USE LOCALHOST!! MySQL will be "smart" and try to use the socket which
@@ -90,6 +103,8 @@ mailserver_replication_user_home: "{{ mailserver_mailbox_home }}"
 # This is mostly important because spamassassin will store it's training data
 # here
 mailserver_mailbox_home: /var/mail
+
+mailserver_have_dkim: True
 
 # DKIM keys. This is an example throwaway key. You should probably define this
 # in an ansible vault.
@@ -161,9 +176,9 @@ mailserver_enable_pop3: False
 ################################################################################
 
 # Ciphers in OpenSSL format, see https://mozilla.github.io/server-side-tls/ssl-config-generator/ for sensible recommondations
-mailserver_ssl_tlsver: "TLSv1.2 TLSv1.3"
-mailserver_ssl_tls_min_ver: "TLSv1.2"
-mailserver_ssl_tlsciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+mailserver_ssl_tlsver: "!SSLv2 !SSLv3 !TLSv1 !TLSv1.1"
+mailserver_ssl_tlsver_min: "TLSv1.2"
+mailserver_ssl_tlsciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:AES256-GCM-SHA384"
 # If postfix is at least 3.2, it can support more than 1 curve. For postfix older
 # than 3.2, we use tls_eecdh_ultra_curve which is secp384r1.
 mailserver_ssl_eccurves: ['prime256v1', 'secp521r1', 'secp384r1']
@@ -174,8 +189,10 @@ mailserver_ssl_dhparam_len: 2048
 mailserver_tls_base: "/usr/share/ca-certificates/mozilla"
 # Do we have a real cert (e.g. in ansible vault)
 mailserver_have_cert: False
+
 ################################################################################
 ################################# DO NOT TOUCH #################################
 ################################################################################
+
 mailserver_have_antispam: False
 mailserver_have_mailman: False

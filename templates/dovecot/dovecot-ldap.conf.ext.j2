@@ -22,6 +22,7 @@
 
 # Space separated list of LDAP hosts to use. host:port is allowed too .
 {% if not mailserver_ldap_dovecot_ssl %}
+# Space separated list of LDAP hosts to use. host:port is allowed too.
 hosts = "{{ mailserver_ldap_servers|join(' ') }}"
 {% else %}
 #hosts = 
@@ -43,13 +44,12 @@ dn = {{ mailserver_ldap_binddn }}
 dnpass = {{ mailserver_ldap_bindpwd }}
 
 # Use SASL binding instead of the simple binding. Note that this changes
-# ldap_version automatically to be 3 if it's lower. Also note that SASL binds
-# and auth_bind=yes don't work together.
-sasl_bind = "{{mailserver_dove_sasl_bind}}"
+# ldap_version automatically to be 3 if it's lower.
+sasl_bind = "{{ 'yes' if mailserver_dovecot_sasl_bind else 'no' }}"
 # SASL mechanism name to use.
-sasl_mech = "{{mailserver_dove_sasl_mech}}"
+sasl_mech = "{{ mailserver_dovecot_sasl_mech }}"
 # SASL realm to use.
-sasl_realm = "{{mailserver_dove_sasl_realm}}"
+sasl_realm = "{{ mailserver_dovecot_sasl_realm|upper }}"
 # SASL authorization ID, ie. the dnpass is for this "master user", but the
 # dn is still the logged in user. Normally you want to keep this empty.
 #sasl_authz_id =
@@ -166,3 +166,12 @@ iterate_filter = "{{ mailserver_ldap_iteratefilter }}"
 # Default password scheme. "{scheme}" before password overrides this.
 # List of supported schemes is in: http://wiki2.dovecot.org/Authentication
 #default_pass_scheme = CRYPT
+
+# By default all LDAP lookups are performed by the auth master process.
+# If blocking=yes, auth worker processes are used to perform the lookups.
+# Each auth worker process creates its own LDAP connection so this can
+# increase parallelism. With blocking=no the auth master process can
+# keep 8 requests pipelined for the LDAP connection, while with blocking=yes
+# each connection has a maximum of 1 request running. For small systems the
+# blocking=no is sufficient and uses less resources.
+#blocking = no

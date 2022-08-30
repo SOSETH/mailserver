@@ -20,7 +20,7 @@ default_internal_user = dovecot
 
 service imap-login {
   inet_listener imap {
-    port = 143
+    port = 0
   }
   inet_listener imaps {
     port = 993
@@ -39,11 +39,10 @@ service imap-login {
   #vsz_limit = $default_vsz_limit
 }
 
-{%if mailserver_enable_pop3 %}
-# POP3 enabled in this role for legacy reasons...
+{% if mailserver_enable_pop3 %}
 service pop3-login {
   inet_listener pop3 {
-    port = 110
+    port = 0
   }
   inet_listener pop3s {
     port = 995
@@ -81,16 +80,13 @@ service imap {
   # Max. number of IMAP processes (connections)
   process_limit = 1024
 
-{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
   unix_listener imap-master {
     user = {{ mailserver_mailbox_user }}
     group = dovecot
     mode = 0660
   }
-{% endif %}
 }
 
-{% if mailserver_dove_version.stdout is version('2.2.19', '>=') %}
 service imap-hibernate {
   unix_listener imap-hibernate {
     user = {{ mailserver_mailbox_user }}
@@ -98,7 +94,6 @@ service imap-hibernate {
     mode = 0660
   }
 }
-{% endif %}
 
 #service submission {
 #  # Max. number of SMTP Submission processes (connections)
@@ -144,7 +139,9 @@ service auth {
 }
 
 service auth-worker {
-  # We do not need access to /etc/shadow, so this does not need to run as root
+  # Auth worker process is run as root by default, so that it can access
+  # /etc/shadow. If this isn't necessary, the user should be changed to
+  # $default_internal_user.
   user = $default_internal_user
 }
 
@@ -159,18 +156,16 @@ service auth-worker {
 #  }
 #}
 
-{% if mailserver_dove_version.stdout is version('2.3.4', '>=') %}
 service stats {
-    unix_listener stats-reader {
-        user = $default_internal_user
-        group = {{ mailserver_mailbox_group }}
-        mode = 0660
-    }
+  unix_listener stats-reader {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
 
-    unix_listener stats-writer {
-        user = $default_internal_user
-        group = {{ mailserver_mailbox_group }}
-        mode = 0660
-    }
+  unix_listener stats-writer {
+    user = $default_internal_user
+    group = {{ mailserver_mailbox_group }}
+    mode = 0660
+  }
 }
-{% endif %}

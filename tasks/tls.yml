@@ -18,10 +18,7 @@
         owner: root
         group: postfix
         name: postfix
-      - path: /etc/dovecot/dh.pem
-        owner: root
-        group: dovecot
-        name: dovecot
+        mode: 0644
 
   - name: Check if SSL certificate exists
     become: True
@@ -66,15 +63,21 @@
   - name: Generate self-signed client certificate
     command: openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
     delegate_to: localhost
+    check_mode: False
     when: not ccertstat.stat.exists
 
-  - name: Copy client certificat
+  - name: Copy client certificate
     become: True
-    copy: src={{ workdir }}/{{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
+    copy:
+      src: "{{ workdir }}/{{ ansible_hostname }}.{{ item }}"
+      dest: "/etc/postfix/{{ ansible_hostname}}.{{ item }}"
+      owner: postfix
+      group: root
+      mode: 0660
     when: not ccertstat.stat.exists
-    with_dict:
-      "{{ansible_hostname}}.key": "client.key"
-      "{{ansible_hostname}}.pem": "client.pem"
+    with_items:
+      - 'key'
+      - 'pem'
 
   - name: Cleanup
     file:

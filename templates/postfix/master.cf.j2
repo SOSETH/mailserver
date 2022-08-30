@@ -14,15 +14,18 @@
 # ==========================================================================
 # We list
 smtp      inet  n       -       y       -       -       smtpd
-    -o smtpd_sasl_auth_enable=no
-    -o smtpd_recipient_restrictions=$smtpd_recipient_restrictions_25
-    -o smtpd_sender_restrictions=$smtpd_sender_restrictions_25
-    -o header_checks=
+  -o smtpd_sasl_auth_enable=no
+{% if not mailserver_behind_proxy %}
+  -o smtpd_recipient_restrictions=permit_mynetworks,reject_invalid_hostname,reject_non_fqdn_hostname,reject_non_fqdn_recipient,reject_non_fqdn_sender,reject_unknown_sender_domain,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,reject_non_fqdn_helo_hostname,reject_invalid_helo_hostname,permit
+{% else %}
+  -o smtpd_recipient_restrictions=permit_mynetworks,reject_unknown_recipient_domain,reject_unauth_pipelining,reject_unauth_destination,reject_multi_recipient_bounce,permit
+{% endif %}
+  -o header_checks=
 {% if ansible_local['mailserver_have_antispam']|default(False) %}
-    -o smtpd_proxy_filter=127.0.0.1:10026
-    -o smtpd_proxy_options=speed_adjust
-    -o smtpd_proxy_timeout=60s
-    -o content_filter=
+  -o smtpd_proxy_filter=127.0.0.1:10026
+  -o smtpd_proxy_options=speed_adjust
+  -o smtpd_proxy_timeout=60s
+  -o content_filter=
 {% endif %}
 submission inet n       -       y       -       -       smtpd
   -o syslog_name=postfix/submission

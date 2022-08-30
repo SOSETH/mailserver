@@ -7,8 +7,6 @@
         - postfix-ldap
         - postfix-mysql
         - postfix-pcre
-        - opendkim
-        - opendkim-tools
         - dovecot-core
         - dovecot-ldap
         - dovecot-imapd
@@ -96,7 +94,12 @@
 
   - name: Configure postfix
     become: True
-    template: src='postfix/{{item}}.j2' dest='/etc/postfix/{{item}}' owner=root group=root mode=0644
+    template:
+      src: "postfix/{{ item }}.j2"
+      dest: "/etc/postfix/{{ item }}"
+      owner: root
+      group: root
+      mode: 0644
     with_items:
       - main.cf
       - master.cf
@@ -201,21 +204,27 @@
       mode: 0644
     notify: restart postfix
 
+  - name: Configure allowed proxy map
+    become: True
+    template:
+      src: postfix/allowed_proxies.j2
+      dest: /etc/postfix/allowed_proxies
+      owner: root
+      group: root
+      mode: 0644
+    notify:
+      - rebuild proxy map
+    tags:
+      - postfix
+
   - name: Handle TLS
     include: tls.yml
-
-  - name: Load dovecot version
-    become: True
-    command: dovecot --version
-    register: mailserver_dove_version
-    changed_when: False
-    check_mode: False
 
   - name: Configure dovecot
     become: True
     template:
-      src: 'dovecot/{{item}}.j2'
-      dest: '/etc/dovecot/{{item}}'
+      src: "dovecot/{{ item }}.j2"
+      dest: "/etc/dovecot/{{ item }}"
       owner: dovecot
       group: "{{ mailserver_mailbox_group }}"
       mode: 0640
@@ -223,13 +232,14 @@
       - dovecot.conf
       - dovecot-ldap.conf.ext
       - dovecot-sql.conf.ext
+      - ssl-keys.conf
     notify: restart dovecot
 
   - name: Install dovecot script
     become: True
     template:
-      src: 'dovecot/{{item}}.j2'
-      dest: '/etc/dovecot/{{item}}'
+      src: "dovecot/{{ item }}.j2"
+      dest: "/etc/dovecot/{{ item }}"
       owner: dovecot
       group: "{{ mailserver_mailbox_group }}"
       mode: 0755
@@ -239,14 +249,24 @@
 
   - name: Create sieve directories
     become: True
-    file: path='{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0755 state=directory
+    file:
+      path: "{{ item }}"
+      owner: "{{ mailserver_mailbox_user }}"
+      group: dovecot
+      mode: 0755
+      state: directory
     with_items:
       - /etc/dovecot/sieve
 
   # These scripts are intentionally unwritable for their owner
   - name: Install sieve scripts
     become: True
-    template: src='dovecot/sieve/{{ item }}.j2' dest='/etc/dovecot/sieve/{{ item }}' owner={{ mailserver_mailbox_user }} group=dovecot mode=0444
+    template:
+      src: "dovecot/sieve/{{ item }}.j2"
+      dest: "/etc/dovecot/sieve/{{ item }}"
+      owner: "{{ mailserver_mailbox_user }}"
+      group: dovecot
+      mode: 0444
     notify: restart dovecot
     with_items:
       - report-ham.sieve
@@ -266,12 +286,47 @@
   # to create the socket directory before each launch
   - name: Create systemd dovecot drop-in directory
     become: True
-    file: path=/etc/systemd/system/dovecot.service.d state=directory owner=root group=root mode=0744
+    file:
+      path: /etc/systemd/system/dovecot.service.d
+      state: directory
+      owner: root
+      group: root
+      mode: 0744
     notify: restart dovecot
 
   - name: Create systemd dovecot drop-in
     become: True
-    template: src=dovecot/dropin.j2 dest=/etc/systemd/system/dovecot.service.d/ansible.conf owner=root group=root mode=0644
+    template:
+      src: dovecot/dropin.j2
+      dest: /etc/systemd/system/dovecot.service.d/ansible.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart dovecot
+
+  - name: Upload kerberos helper for SASL/GSSAPI binds
+    become: True
+    when: mailserver_dovecot_sasl_bind
+    template:
+      src: dovecot/krb-helper.sh.j2
+      dest: /etc/dovecot/krb-helper.sh
+      owner: root
+      group: root
+      mode: 0744
+    notify: restart dovecot
+
+  - name: Upload kereros helper service/timer
+    become: True
+    when: mailserver_dovecot_sasl_bind
+    copy:
+      src: "{{ item[0] }}"
+      dest: "{{ item[1] }}"
+      owner: root
+      group: root
+      mode: 0644
+    loop:
+      - ['dovecot/dovecot-krbhelper.service', '/etc/systemd/system/dovecot-krbhelper.service']
+      - ['dovecot/dovecot-krbhelper.timer', '/etc/systemd/system/dovecot-krbhelper.timer']
     notify: restart dovecot
 
   # This is recommended (ahead-of-time compile) but buggy ATM :(
@@ -285,7 +340,12 @@
 
   - name: Configure dovecot features
     become: True
-    template: src='dovecot/conf.d/{{item}}.j2' dest='/etc/dovecot/conf.d/{{item}}' owner=root group=dovecot mode=0644
+    template:
+      src: "dovecot/conf.d/{{ item }}.j2"
+      dest: "/etc/dovecot/conf.d/{{ item }}"
+      owner: root
+      group: dovecot
+      mode: 0644
     with_items:
       - 10-auth.conf
       - 10-logging.conf
@@ -309,7 +369,12 @@
 
   - name: Create dovecot dummy users for antispam integration
     become: True
-    template: src='dovecot/{{item}}.j2' dest='/etc/dovecot/{{item}}' owner=root group=dovecot mode=0644
+    template:
+      src: "dovecot/{{ item }}.j2"
+      dest: "/etc/dovecot/{{ item }}"
+      owner: root
+      group: dovecot
+      mode: 0644
     with_items:
       - users
     when: ansible_local['mailserver_have_antispam']|default(False)
@@ -319,7 +384,9 @@
   - name: Remove unneeded dovecot config files
     become: True
     notify: restart dovecot
-    file: path='/etc/dovecot/{{item}}' state=absent
+    file:
+      path: "/etc/dovecot/{{ item }}"
+      state: absent
     with_items:
       - dovecot-dict-auth.conf.ext
       - dovecot-dict-sql.conf.ext
@@ -327,7 +394,9 @@
   - name: Remove unneeded dovecot feature config files
     become: True
     notify: restart dovecot
-    file: path='/etc/dovecot/conf.d/{{item}}' state=absent
+    file:
+      path: "/etc/dovecot/conf.d/{{ item }}"
+      state: absent
     with_items:
       - 10-director.conf
       - 10-tcpwrapper.conf
@@ -341,40 +410,6 @@
       - auth-static.conf.ext
       - 90-sieve-extprograms.conf
 
-  - name: Create OpenDKIM config directory
-    become: True
-    file: path=/etc/opendkim state=directory owner=opendkim group=root mode=0754
-
-  - name: Create OpenDKIM key directory
-    become: True
-    file: path=/etc/opendkim/keys state=directory owner=opendkim group=root mode=0740
-
-  - name: Upload DKIM keys
-    become: True
-    no_log: True
-    copy:
-      content: "{{ item.privkey }}"
-      dest: /etc/opendkim/keys/{{ item.name }}
-      owner: opendkim
-      group: root
-      mode: 0640
-    with_items: "{{ mailserver_dkim_domains }}"
-    notify: restart opendkim
-
-  - name: Configure OpenDKIM
-    become: True
-    template: src=opendkim/opendkim.conf.j2 dest=/etc/opendkim.conf owner=root group=opendkim mode=0644
-    notify: regenerate opendkim
-
-  - name: Configure OpenDKIM service
-    become: True
-    template: src=opendkim/opendkim.j2 dest=/etc/default/opendkim owner=root group=root mode=0644
-    notify: regenerate opendkim
-
-  - name: Generate OpenDKIM tables
-    become: True
-    template: src=opendkim/{{item}}.j2 dest=/etc/opendkim/{{item}} owner=root group=opendkim mode=0644
-    notify: restart opendkim
-    with_items:
-      - signtable
-      - keytable
+  - name: Handle DKIM
+    include: dkim.yml
+    when: mailserver_have_dkim
