@@ -4,6 +4,8 @@
 
 {% include './templates/postfix/ldap-conn.j2' %}
 
-search_base = {{ mailserver_ldap_basedn }}
-query_filter = {{ mailserver_ldap_usermailfilter }}
-result_attribute = {{ mailserver_ldap_usermailattr }}
+search_base = cn=computers,{{ mailserver_ldap_basedn }}
+query_filter = (&(objectClass=mailSenderEntity)(|(primaryMail=%s)(sendAlias=%s)))
+special_result_attribute = member
+result_attribute = cn
+result_format = host/%s
