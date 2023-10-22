@@ -2,7 +2,7 @@
 ######################## Things you might need to change #######################
 ################################################################################
 
-mailserver_behind_proxy: True
+mailserver_behind_proxy: true
 # hostname, hostname:port, [hostname]:port, [hostaddress] or [hostaddress]:port
 # The form [hostname] turns off MX lookups
 mailserver_proxy: ""
@@ -37,7 +37,7 @@ mailserver_dovecot_ssl_key: "{{ mailserver_ssl_key }}"
 
 mailserver_ldap_servers: ["127.0.0.1"]
 # Enforce TLS for LDAP connections
-mailserver_ldap_tls: False
+mailserver_ldap_tls: false
 
 # To list LDAP groups and get the mail of each user, we hopefully need to authenticate.
 # Specify a user with sufficient privileges here
@@ -45,7 +45,7 @@ mailserver_ldap_binddn: ""
 mailserver_ldap_bindpwd: ""
 
 # Use SASL to bind to LDAP instead of simple bind
-mailserver_dovecot_sasl_bind: False
+mailserver_dovecot_sasl_bind: false
 # SASL mechanism to use for binding ('gssapi' for kerberos)
 mailserver_dovecot_sasl_mech: "gssapi"
 # In case of kerberos can be left empty
@@ -62,11 +62,11 @@ mailserver_ldap_iteratefilter: "(objectClass=posixAccount)"
 mailserver_ldap_usermailattr: "mail"
 
 # Enable GSSAPI authentication for users.
-mailserver_use_gssapi: False
+mailserver_use_gssapi: false
 mailserver_keytab_location: /etc/dovecot/kerberos.keytab
 
 # Use PAM for passdb lookups instead of LDAP binds
-mailserver_dovecot_ldap_passdb_use_pam: False
+mailserver_dovecot_ldap_passdb_use_pam: false
 
 mailserver_smtpd_banner: "$myhostname ESMTP $mail_name"
 mailserver_dovecot_greeting: "Dovecot ready."
@@ -97,7 +97,7 @@ mailserver_replication_user_home: "{{ mailserver_mailbox_home }}"
 # here
 mailserver_mailbox_home: /var/mail
 
-mailserver_have_dkim: True
+mailserver_have_dkim: true
 
 # DKIM keys. This is an example throwaway key. You should probably define this
 # in an ansible vault.
@@ -135,7 +135,7 @@ mailserver_dkim_domains:
 
 
 # Do you really need POP3?
-mailserver_enable_pop3: False
+mailserver_enable_pop3: false
 
 ################################################################################
 ################## Things you probably do not need to change ###################
@@ -144,7 +144,7 @@ mailserver_enable_pop3: False
 # Ciphers in OpenSSL format, see https://mozilla.github.io/server-side-tls/ssl-config-generator/ for sensible recommondations
 mailserver_ssl_tlsver: "!SSLv2 !SSLv3 !TLSv1 !TLSv1.1"
 mailserver_ssl_tlsver_min: "TLSv1.2"
-mailserver_ssl_tlsciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:AES256-GCM-SHA384"
+mailserver_ssl_tlsciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:AES256-GCM-SHA384" # noqa yaml[line-length]
 # If postfix is at least 3.2, it can support more than 1 curve. For postfix older
 # than 3.2, we use tls_eecdh_ultra_curve which is secp384r1.
 mailserver_ssl_eccurves: ['prime256v1', 'secp521r1', 'secp384r1']
@@ -154,11 +154,11 @@ mailserver_ssl_dhparam_len: 2048
 # Path to system certificate truststore
 mailserver_tls_base: "/usr/share/ca-certificates/mozilla"
 # Do we have a real cert (e.g. in ansible vault)
-mailserver_have_cert: False
+mailserver_have_cert: false
 
 ################################################################################
 ################################# DO NOT TOUCH #################################
 ################################################################################
 
-mailserver_have_antispam: False
-mailserver_have_mailman: False
+mailserver_have_antispam: false
+mailserver_have_mailman: false

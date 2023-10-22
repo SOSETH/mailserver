@@ -1,325 +1,328 @@
 ---
-  - name: Install mail server software
-    become: True
-    apt:
-      name:
-        - postfix
-        - postfix-ldap
-        - postfix-mysql
-        - postfix-pcre
-        - dovecot-core
-        - dovecot-ldap
-        - dovecot-imapd
-        - dovecot-lmtpd
-        - dovecot-pop3d
-        - dovecot-mysql
-        - dovecot-sieve
-        - dovecot-managesieved
-        - dovecot-gssapi
-      state: latest
-      update_cache: True
-      cache_valid_time: 1800
-
-  - name: Ensure vmail group exists
-    become: True
-    group:
-      name: "{{ mailserver_mailbox_group }}"
-      system: yes
-
-  - name: Ensure vmail user exists
-    become: True
-    user:
-      name: "{{ mailserver_mailbox_user }}"
-      shell: /bin/bash
-      system: yes
-      createhome: no
-      home: "{{ mailserver_mailbox_home }}"
-      group: "{{ mailserver_mailbox_group }}"
-
-  - name: Ensure vmail user's home exists
-    become: True
-    file:
-      path: "{{ mailserver_mailbox_home }}"
-      state: directory
-      owner: "{{ mailserver_mailbox_user }}"
-      group: "{{ mailserver_mailbox_group }}"
-      mode: 0755
-
-  - name: Ensure mail storage exists
-    become: True
-    file:
-      path: "{{ mailserver_mailbox_dir }}"
-      state: directory
-      owner: "{{ mailserver_mailbox_user }}"
-      group: "{{ mailserver_mailbox_group }}"
-      mode: 0770
-
-  - name: Ensure mail attachement storage exists
-    become: True
-    file:
-      path: "{{ mailserver_mailbox_attachement_dir }}"
-      state: directory
-      owner: "{{ mailserver_mailbox_user }}"
-      group: "{{ mailserver_mailbox_group }}"
-      mode: 0770
-
-  - name: Concat certificates
-    become: True
-    when: mailserver_have_mailman|bool
-    shell: "cat /etc/haproxy/lmtp-cl.crt /etc/haproxy/lmtp-cl.key > /etc/haproxy/lmtp-cl-full.pem"
-    changed_when: False
-
-  - name: Configure LMTP HAproxy dropin
-    become: True
-    when: mailserver_have_mailman|bool
-    template:
-      src: lmtp.conf.j2
-      dest: /etc/haproxy/conf.d/20-lmtp.conf
-      owner: root
-      group: root
-      mode: 0644
-    notify: restart haproxy
-
-  - name: Create SSH keys
-    include: ssh.yml
-    when: groups[mailserver_group]|length > 1
-
-  # Feel free to clean the command up...
-  - name: Load postfix version
-    shell: postconf -d | grep 'mail_version =' | awk -F= '{print $2}' | sed 's/ //g'
-    register: mailserver_postfix_version
-    changed_when: False
-    check_mode: False
-    tags: postfix
-
-  - name: Configure postfix
-    become: True
-    template:
-      src: "postfix/{{ item }}.j2"
-      dest: "/etc/postfix/{{ item }}"
-      owner: root
-      group: root
-      mode: 0644
-    with_items:
-      - main.cf
-      - master.cf
-      - mysql-aliases.cf
-      - mysql-senders.cf
-      - mysql-vdomains.cf
-      - mysql-transport.cf
-      - dynamicmaps.cf
-      - cleanup-headers
-      - ldap-map.cf
-    notify:
-      - restart postfix
-    tags: postfix
-
-  - name: Configure allowed proxy map
-    become: True
-    template:
-      src: postfix/allowed_proxies.j2
-      dest: /etc/postfix/allowed_proxies
-      owner: root
-      group: root
-      mode: 0644
-    notify:
-      - rebuild proxy map
-    tags:
+- name: Install mail server software
+  become: true
+  ansible.builtin.apt:
+    name:
       - postfix
+      - postfix-ldap
+      - postfix-mysql
+      - postfix-pcre
+      - dovecot-core
+      - dovecot-ldap
+      - dovecot-imapd
+      - dovecot-lmtpd
+      - dovecot-pop3d
+      - dovecot-mysql
+      - dovecot-sieve
+      - dovecot-managesieved
+      - dovecot-gssapi
+    state: present
+    update_cache: true
+    cache_valid_time: 1800
 
-  - name: Handle TLS
-    include: tls.yml
+- name: Ensure vmail group exists
+  become: true
+  ansible.builtin.group:
+    name: "{{ mailserver_mailbox_group }}"
+    system: true
 
-  - name: Configure dovecot
-    become: True
-    template:
-      src: "dovecot/{{ item }}.j2"
-      dest: "/etc/dovecot/{{ item }}"
-      owner: dovecot
-      group: "{{ mailserver_mailbox_group }}"
-      mode: 0640
-    with_items:
-      - dovecot.conf
-      - dovecot-ldap.conf.ext
-      - dovecot-sql.conf.ext
-      - ssl-keys.conf
-    notify: restart dovecot
+- name: Ensure vmail user exists
+  become: true
+  ansible.builtin.user:
+    name: "{{ mailserver_mailbox_user }}"
+    shell: /bin/bash
+    system: true
+    createhome: false
+    home: "{{ mailserver_mailbox_home }}"
+    group: "{{ mailserver_mailbox_group }}"
 
-  - name: Install dovecot script
-    become: True
-    template:
-      src: "dovecot/{{ item }}.j2"
-      dest: "/etc/dovecot/{{ item }}"
-      owner: dovecot
-      group: "{{ mailserver_mailbox_group }}"
-      mode: 0755
-    notify: restart dovecot
-    with_items:
-      - quota-warning.sh
+- name: Ensure vmail user's home exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ mailserver_mailbox_home }}"
+    state: directory
+    owner: "{{ mailserver_mailbox_user }}"
+    group: "{{ mailserver_mailbox_group }}"
+    mode: "0755"
 
-  - name: Create sieve directories
-    become: True
-    file:
-      path: "{{ item }}"
-      owner: "{{ mailserver_mailbox_user }}"
-      group: dovecot
-      mode: 0755
-      state: directory
-    with_items:
-      - /etc/dovecot/sieve
+- name: Ensure mail storage exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ mailserver_mailbox_dir }}"
+    state: directory
+    owner: "{{ mailserver_mailbox_user }}"
+    group: "{{ mailserver_mailbox_group }}"
+    mode: "0770"
 
-  # These scripts are intentionally unwritable for their owner
-  - name: Install sieve scripts
-    become: True
-    template:
-      src: "dovecot/sieve/{{ item }}.j2"
-      dest: "/etc/dovecot/sieve/{{ item }}"
-      owner: "{{ mailserver_mailbox_user }}"
-      group: dovecot
-      mode: 0444
-    notify: restart dovecot
-    with_items:
-      - report-ham.sieve
-      - report-spam.sieve
-    when: ansible_local['mailserver_have_antispam']|default(False)
-    register: sscripts
+- name: Ensure mail attachement storage exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ mailserver_mailbox_attachement_dir }}"
+    state: directory
+    owner: "{{ mailserver_mailbox_user }}"
+    group: "{{ mailserver_mailbox_group }}"
+    mode: "0770"
 
-  - name: Remove old compiled sieve scripts
-    become: True
-    shell: rm /etc/dovecot/sieve/*.svbin
-    failed_when: False
-    args:
-      warn: False
-    when: sscripts.changed
+- name: Concat certificates
+  become: true
+  when: mailserver_have_mailman|bool
+  ansible.builtin.shell: "cat /etc/haproxy/lmtp-cl.crt /etc/haproxy/lmtp-cl.key > /etc/haproxy/lmtp-cl-full.pem"
+  changed_when: false
 
-  # Per spec, /var/run is not necessarily persistent. Therefore we need to
-  # to create the socket directory before each launch
-  - name: Create systemd dovecot drop-in directory
-    become: True
-    file:
-      path: /etc/systemd/system/dovecot.service.d
-      state: directory
-      owner: root
-      group: root
-      mode: 0744
-    notify: restart dovecot
+- name: Configure LMTP HAproxy dropin
+  become: true
+  when: mailserver_have_mailman|bool
+  ansible.builtin.template:
+    src: lmtp.conf.j2
+    dest: /etc/haproxy/conf.d/20-lmtp.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart haproxy
 
-  - name: Create systemd dovecot drop-in
-    become: True
-    template:
-      src: dovecot/dropin.j2
-      dest: /etc/systemd/system/dovecot.service.d/ansible.conf
-      owner: root
-      group: root
-      mode: 0644
-    notify: restart dovecot
+- name: Create SSH keys
+  ansible.builtin.include_tasks: ssh.yml
+  when: groups[mailserver_group]|length > 1
 
-  - name: Upload kerberos helper for SASL/GSSAPI binds
-    become: True
-    when: mailserver_dovecot_sasl_bind
-    template:
-      src: dovecot/krb-helper.sh.j2
-      dest: /etc/dovecot/krb-helper.sh
-      owner: root
-      group: root
-      mode: 0744
-    notify: restart dovecot
+# Feel free to clean the command up...
+- name: Load postfix version
+  ansible.builtin.shell: |
+    set -o pipefail
+    postconf -d mail_version | awk -F= '{print $2}' | sed 's/ //g'
+  register: mailserver_postfix_version
+  changed_when: false
+  check_mode: false
+  tags: postfix
 
-  - name: Upload kereros helper service/timer
-    become: True
-    when: mailserver_dovecot_sasl_bind
-    copy:
-      src: "{{ item[0] }}"
-      dest: "{{ item[1] }}"
-      owner: root
-      group: root
-      mode: 0644
-    loop:
-      - ['dovecot/dovecot-krbhelper.service', '/etc/systemd/system/dovecot-krbhelper.service']
-      - ['dovecot/dovecot-krbhelper.timer', '/etc/systemd/system/dovecot-krbhelper.timer']
-    notify: restart dovecot
+- name: Configure postfix
+  become: true
+  ansible.builtin.template:
+    src: "postfix/{{ item }}.j2"
+    dest: "/etc/postfix/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  with_items:
+    - main.cf
+    - master.cf
+    - mysql-aliases.cf
+    - mysql-senders.cf
+    - mysql-vdomains.cf
+    - mysql-transport.cf
+    - dynamicmaps.cf
+    - cleanup-headers
+    - ldap-map.cf
+  notify:
+    - Restart postfix
+  tags: postfix
 
-  # This is recommended (ahead-of-time compile) but buggy ATM :(
-  #- name: Compile sieve scripts
-  #  become: True
-  #  command: sievec "/etc/dovecot/sieve/{{ item }}"
-  #  notify: restart dovecot
-  #  with_items:
-  #    - report-ham.sieve
-  #    - report-spam.sieve
+- name: Configure allowed proxy map
+  become: true
+  ansible.builtin.template:
+    src: postfix/allowed_proxies.j2
+    dest: /etc/postfix/allowed_proxies
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Rebuild proxy map
+  tags:
+    - postfix
 
-  - name: Configure dovecot features
-    become: True
-    template:
-      src: "dovecot/conf.d/{{ item }}.j2"
-      dest: "/etc/dovecot/conf.d/{{ item }}"
-      owner: root
-      group: dovecot
-      mode: 0644
-    with_items:
-      - 10-auth.conf
-      - 10-logging.conf
-      - 10-mail.conf
-      - 10-master.conf
-      - 10-ssl.conf
-      - 15-lda.conf
-      - 15-mailboxes.conf
-      - 20-imap.conf
-      - 20-lmtp.conf
-      - 20-pop3.conf
-      - 20-managesieve.conf
-      - 30-replication.conf
-      - 90-acl.conf
-      - 90-plugin.conf
-      - 90-quota.conf
-      - 90-sieve.conf
-      - auth-ldap.conf.ext
-      - auth-passwdfile.conf.ext
-    notify: restart dovecot
+- name: Handle TLS
+  ansible.builtin.include_tasks: tls.yml
 
-  - name: Create dovecot dummy users for antispam integration
-    become: True
-    template:
-      src: "dovecot/{{ item }}.j2"
-      dest: "/etc/dovecot/{{ item }}"
-      owner: root
-      group: dovecot
-      mode: 0644
-    with_items:
-      - users
-    when: ansible_local['mailserver_have_antispam']|default(False)
+- name: Configure dovecot
+  become: true
+  ansible.builtin.template:
+    src: "dovecot/{{ item }}.j2"
+    dest: "/etc/dovecot/{{ item }}"
+    owner: dovecot
+    group: "{{ mailserver_mailbox_group }}"
+    mode: "0640"
+  with_items:
+    - dovecot.conf
+    - dovecot-ldap.conf.ext
+    - dovecot-sql.conf.ext
+    - ssl-keys.conf
+  notify: Restart dovecot
 
-  # This removes config files for all dovecot features that we do not use, which makes reading the
-  # generated config much less confusing...
-  - name: Remove unneeded dovecot config files
-    become: True
-    notify: restart dovecot
-    file:
-      path: "/etc/dovecot/{{ item }}"
-      state: absent
-    with_items:
-      - dovecot-dict-auth.conf.ext
-      - dovecot-dict-sql.conf.ext
+- name: Install dovecot script
+  become: true
+  ansible.builtin.template:
+    src: "dovecot/{{ item }}.j2"
+    dest: "/etc/dovecot/{{ item }}"
+    owner: dovecot
+    group: "{{ mailserver_mailbox_group }}"
+    mode: "0755"
+  notify: Restart dovecot
+  with_items:
+    - quota-warning.sh
 
-  - name: Remove unneeded dovecot feature config files
-    become: True
-    notify: restart dovecot
-    file:
-      path: "/etc/dovecot/conf.d/{{ item }}"
-      state: absent
-    with_items:
-      - 10-director.conf
-      - 10-tcpwrapper.conf
-      - auth-checkpassword.conf.ext
-      - auth-deny.conf.ext
-      - auth-dict.conf.ext
-      - auth-master.conf.ext
-      - auth-sql.conf.ext
-      - auth-system.conf.ext
-      - auth-vpopmail.conf.ext
-      - auth-static.conf.ext
-      - 90-sieve-extprograms.conf
+- name: Create sieve directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ mailserver_mailbox_user }}"
+    group: dovecot
+    mode: "0755"
+    state: directory
+  with_items:
+    - /etc/dovecot/sieve
 
-  - name: Handle DKIM
-    include: dkim.yml
-    when: mailserver_have_dkim
+# These scripts are intentionally unwritable for their owner
+- name: Install sieve scripts
+  become: true
+  ansible.builtin.template:
+    src: "dovecot/sieve/{{ item }}.j2"
+    dest: "/etc/dovecot/sieve/{{ item }}"
+    owner: "{{ mailserver_mailbox_user }}"
+    group: dovecot
+    mode: "0444"
+  notify: Restart dovecot
+  with_items:
+    - report-ham.sieve
+    - report-spam.sieve
+  when: ansible_local['mailserver_have_antispam']|default(False)
+  register: sscripts
+
+- name: Remove old compiled sieve scripts
+  become: true
+  ansible.builtin.shell: rm /etc/dovecot/sieve/*.svbin
+  failed_when: false
+  changed_when: false
+  args:
+    warn: false
+  when: sscripts.changed # noqa: no-handler
+
+# Per spec, /var/run is not necessarily persistent. Therefore we need to
+# to create the socket directory before each launch
+- name: Create systemd dovecot drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/dovecot.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0744"
+  notify: Restart dovecot
+
+- name: Create systemd dovecot drop-in
+  become: true
+  ansible.builtin.template:
+    src: dovecot/dropin.j2
+    dest: /etc/systemd/system/dovecot.service.d/ansible.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart dovecot
+
+- name: Upload kerberos helper for SASL/GSSAPI binds
+  become: true
+  when: mailserver_dovecot_sasl_bind
+  ansible.builtin.template:
+    src: dovecot/krb-helper.sh.j2
+    dest: /etc/dovecot/krb-helper.sh
+    owner: root
+    group: root
+    mode: "0744"
+  notify: Restart dovecot
+
+- name: Upload kereros helper service/timer
+  become: true
+  when: mailserver_dovecot_sasl_bind
+  ansible.builtin.copy:
+    src: "{{ item[0] }}"
+    dest: "{{ item[1] }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - ['dovecot/dovecot-krbhelper.service', '/etc/systemd/system/dovecot-krbhelper.service']
+    - ['dovecot/dovecot-krbhelper.timer', '/etc/systemd/system/dovecot-krbhelper.timer']
+  notify: Restart dovecot
+
+# This is recommended (ahead-of-time compile) but buggy ATM :(
+# - name: Compile sieve scripts
+#   become: true
+#   ansible.builtin.command: sievec "/etc/dovecot/sieve/{{ item }}"
+#   notify: Restart dovecot
+#   with_items:
+#     - report-ham.sieve
+#     - report-spam.sieve
+
+- name: Configure dovecot features
+  become: true
+  ansible.builtin.template:
+    src: "dovecot/conf.d/{{ item }}.j2"
+    dest: "/etc/dovecot/conf.d/{{ item }}"
+    owner: root
+    group: dovecot
+    mode: "0644"
+  with_items:
+    - 10-auth.conf
+    - 10-logging.conf
+    - 10-mail.conf
+    - 10-master.conf
+    - 10-ssl.conf
+    - 15-lda.conf
+    - 15-mailboxes.conf
+    - 20-imap.conf
+    - 20-lmtp.conf
+    - 20-pop3.conf
+    - 20-managesieve.conf
+    - 30-replication.conf
+    - 90-acl.conf
+    - 90-plugin.conf
+    - 90-quota.conf
+    - 90-sieve.conf
+    - auth-ldap.conf.ext
+    - auth-passwdfile.conf.ext
+  notify: Restart dovecot
+
+- name: Create dovecot dummy users for antispam integration
+  become: true
+  ansible.builtin.template:
+    src: "dovecot/{{ item }}.j2"
+    dest: "/etc/dovecot/{{ item }}"
+    owner: root
+    group: dovecot
+    mode: "0644"
+  with_items:
+    - users
+  when: ansible_local['mailserver_have_antispam']|default(False)
+
+# This removes config files for all dovecot features that we do not use, which makes reading the
+# generated config much less confusing...
+- name: Remove unneeded dovecot config files
+  become: true
+  notify: Restart dovecot
+  ansible.builtin.file:
+    path: "/etc/dovecot/{{ item }}"
+    state: absent
+  with_items:
+    - dovecot-dict-auth.conf.ext
+    - dovecot-dict-sql.conf.ext
+
+- name: Remove unneeded dovecot feature config files
+  become: true
+  notify: Restart dovecot
+  ansible.builtin.file:
+    path: "/etc/dovecot/conf.d/{{ item }}"
+    state: absent
+  with_items:
+    - 10-director.conf
+    - 10-tcpwrapper.conf
+    - auth-checkpassword.conf.ext
+    - auth-deny.conf.ext
+    - auth-dict.conf.ext
+    - auth-master.conf.ext
+    - auth-sql.conf.ext
+    - auth-system.conf.ext
+    - auth-vpopmail.conf.ext
+    - auth-static.conf.ext
+    - 90-sieve-extprograms.conf
+
+- name: Handle DKIM
+  ansible.builtin.include_tasks: dkim.yml
+  when: mailserver_have_dkim
