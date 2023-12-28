@@ -83,6 +83,8 @@
   - name: Create SSH keys
     include: ssh.yml
     when: groups[mailserver_group]|length > 1
+    tags:
+      - ssh
 
   # Feel free to clean the command up...
   - name: Load postfix version

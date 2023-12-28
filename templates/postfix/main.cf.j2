@@ -160,7 +160,7 @@ smtpd_client_connection_count_limit = {{ mailserver_connection_count_limit }}
 smtpd_client_connection_rate_limit = {{ mailserver_connection_rate_limit }}
 
 # Limit the number of simultanious recipients
-smtpd_recipient_limit = 10
+smtpd_recipient_limit = {{ mailserver_recipient_limit }}
 
 # Disable ERTN. Otherwise everybody can try to flush the queue...
 smtpd_etrn_restrictions=reject
@@ -197,7 +197,7 @@ smtpd_recipient_restrictions = reject_sender_login_mismatch, permit_sasl_authent
 smtpd_sender_restrictions = permit_mynetworks,
 {% if mailserver_config_method == "ldap" %}  check_recipient_access ldap:/etc/postfix/ldap-external-receive.cf,
 {% endif %}
-  permit_mynetworks, reject_unauth_destination,
+  permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination,
   reject_non_fqdn_sender, reject_non_fqdn_recipient, reject_unknown_recipient_domain,
   reject_unauth_pipelining, permit
 

@@ -130,7 +130,7 @@ service auth {
   # SASL for Postfix. Only used for 465 and 587
   unix_listener /var/spool/postfix/private/auth {
    group = postfix
-   mode = 0600
+   mode = 0660
    user = postfix
   }
 

@@ -56,7 +56,8 @@
 
   - name: Check if SSL client certificate exists
     become: True
-    stat: path=/etc/postfix/client.pem
+    stat:
+      path: "/etc/postfix/{{ ansible_hostname }}.pem"
     register: ccertstat
     changed_when: False
 
