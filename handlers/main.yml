@@ -1,51 +1,49 @@
 ---
-  - name: restart postfix
-    become: True
-    systemd:
-      name: postfix@-
-      enabled: yes
-      state: restarted
-      daemon_reload: yes
+- name: Restart postfix
+  become: true
+  ansible.builtin.systemd:
+    name: postfix@-
+    enabled: true
+    state: restarted
+    daemon_reload: true
 
-  - name: rebuild proxy map
-    become: True
-    command: postmap /etc/postfix/allowed_proxies
-    notify:
-      - restart postfix
+- name: Rebuild proxy map
+  become: true
+  ansible.builtin.command: postmap /etc/postfix/allowed_proxies
+  changed_when: false
+  notify:
+    - restart postfix
 
-  - name: restart dovecot
-    become: True
-    systemd:
-      name: dovecot
-      enabled: yes
-      state: restarted
-      daemon_reload: yes
+- name: Restart dovecot
+  become: true
+  ansible.builtin.systemd:
+    name: dovecot
+    enabled: true
+    state: restarted
+    daemon_reload: true
 
-  - name: restart opendkim
-    become: True
-    systemd:
-      name: opendkim
-      enabled: yes
-      state: restarted
-      daemon_reload: yes
+- name: Restart opendkim
+  become: true
+  ansible.builtin.systemd:
+    name: opendkim
+    enabled: true
+    state: restarted
+    daemon_reload: true
 
-  - name: restart haproxy
-    become: True
-    service:
-      name: haproxy
-      enabled: yes
-      state: restarted
+- name: Restart haproxy
+  become: true
+  ansible.builtin.service:
+    name: haproxy
+    enabled: true
+    state: restarted
 
-  - name: newalias
-    become: True
-    command: newaliases
-
-  # For reasons I do not understand, the socket is hardcoded in Debian's
-  # systemd unit file. The init script in jessie correctly reads the settings,
-  # on Strech you need to regenerate the unit. I don't know why the unit
-  # doesn't load the configuration as an env-file, so the workaround is
-  # replicated here.
-  - name: regenerate opendkim
-    become: True
-    shell: /lib/opendkim/opendkim.service.generate
-    notify: restart opendkim
+# For reasons I do not understand, the socket is hardcoded in Debian's
+# systemd unit file. The init script in jessie correctly reads the settings,
+# on Strech you need to regenerate the unit. I don't know why the unit
+# doesn't load the configuration as an env-file, so the workaround is
+# replicated here.
+- name: Regenerate opendkim
+  become: true
+  ansible.builtin.command: /lib/opendkim/opendkim.service.generate
+  changed_when: false
+  notify: restart opendkim

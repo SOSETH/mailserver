@@ -1,73 +1,73 @@
 ---
-  - name: Install DKIM software
-    become: True
-    apt:
-      name:
-        - opendkim
-        - opendkim-tools
-      state: latest
-      update_cache: True
-      cache_valid_time: 1800
+- name: Install DKIM software
+  become: true
+  ansible.builtin.apt:
+    name:
+      - opendkim
+      - opendkim-tools
+    state: present
+    update_cache: true
+    cache_valid_time: 1800
 
-  - name: Create OpenDKIM config directory
-    become: True
-    file:
-      path: /etc/opendkim
-      state: directory
-      owner: opendkim
-      group: root
-      mode: 0754
+- name: Create OpenDKIM config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/opendkim
+    state: directory
+    owner: opendkim
+    group: root
+    mode: "0754"
 
-  - name: Create OpenDKIM key directory
-    become: True
-    file:
-      path: /etc/opendkim/keys
-      state: directory
-      owner: opendkim
-      group: root
-      mode: 0740
+- name: Create OpenDKIM key directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/opendkim/keys
+    state: directory
+    owner: opendkim
+    group: root
+    mode: "0740"
 
-  - name: Upload DKIM keys
-    become: True
-    no_log: True
-    copy:
-      content: "{{ item.privkey }}"
-      dest: "/etc/opendkim/keys/{{ item.name }}"
-      owner: opendkim
-      group: root
-      mode: 0640
-    with_items: "{{ mailserver_dkim_domains }}"
-    notify: restart opendkim
+- name: Upload DKIM keys
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    content: "{{ item.privkey }}"
+    dest: "/etc/opendkim/keys/{{ item.name }}"
+    owner: opendkim
+    group: root
+    mode: "0640"
+  with_items: "{{ mailserver_dkim_domains }}"
+  notify: Restart opendkim
 
-  - name: Configure OpenDKIM
-    become: True
-    template:
-      src: opendkim/opendkim.conf.j2
-      dest: /etc/opendkim.conf
-      owner: root
-      group: opendkim
-      mode: 0644
-    notify: regenerate opendkim
+- name: Configure OpenDKIM
+  become: true
+  ansible.builtin.template:
+    src: opendkim/opendkim.conf.j2
+    dest: /etc/opendkim.conf
+    owner: root
+    group: opendkim
+    mode: "0644"
+  notify: Regenerate opendkim
 
-  - name: Configure OpenDKIM service
-    become: True
-    template:
-      src: opendkim/opendkim.j2
-      dest: /etc/default/opendkim
-      owner: root
-      group: root
-      mode: 0644
-    notify: regenerate opendkim
+- name: Configure OpenDKIM service
+  become: true
+  ansible.builtin.template:
+    src: opendkim/opendkim.j2
+    dest: /etc/default/opendkim
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Regenerate opendkim
 
-  - name: Generate OpenDKIM tables
-    become: True
-    template:
-      src: "opendkim/{{ item }}.j2"
-      dest: "/etc/opendkim/{{ item }}"
-      owner: root
-      group: opendkim
-      mode: 0644
-    notify: restart opendkim
-    with_items:
-      - signtable
-      - keytable
+- name: Generate OpenDKIM tables
+  become: true
+  ansible.builtin.template:
+    src: "opendkim/{{ item }}.j2"
+    dest: "/etc/opendkim/{{ item }}"
+    owner: root
+    group: opendkim
+    mode: "0644"
+  notify: Restart opendkim
+  with_items:
+    - signtable
+    - keytable

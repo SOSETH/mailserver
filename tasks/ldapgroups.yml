@@ -1,35 +1,59 @@
 ---
-  - name: Make sure java is installed
-    become: True
-    apt: name=default-jre-headless state=latest update_cache=yes cache_valid_time=1800
+- name: Make sure java is installed
+  become: true
+  ansible.builtin.apt:
+    name: default-jre-headless
+    state: present
+    update_cache: true
+    cache_valid_time: 1800
 
-  - name: Create service user
-    become: True
-    user:
-      name=ldapmail
-      group=dovecot
-      shell=/bin/false
-      system=yes
+- name: Create service user
+  become: true
+  ansible.builtin.user:
+    name: ldapmail
+    group: dovecot
+    shell: /bin/false
+    system: true
 
-  - name: Create install directory
-    become: True
-    file: path=/opt/ldapmail state=directory owner=ldapmail group=root mode=0750
+- name: Create install directory
+  become: true
+  ansible.builtin.file:
+    path: /opt/ldapmail
+    state: directory
+    owner: ldapmail
+    group: root
+    mode: "0750"
 
-  - name: Copy files
-    become: True
-    copy: src={{ item }} dest=/opt/ldapmail owner=ldapmail group=root mode=0640
-    with_items:
-      - extras.yaml
-      - ldap-groups.jar
+- name: Copy files
+  become: true
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /opt/ldapmail
+    owner: ldapmail
+    group: root
+    mode: "0640"
+  with_items:
+    - extras.yaml
+    - ldap-groups.jar
 
-  - name: Create configuration
-    become: True
-    template: src=settings.properties.j2 dest=/opt/ldapmail/settings.properties owner=ldapmail group=root mode=0640
+- name: Create configuration
+  become: true
+  ansible.builtin.template:
+    src: settings.properties.j2
+    dest: /opt/ldapmail/settings.properties
+    owner: ldapmail
+    group: root
+    mode: "0640"
 
-  - name: Create systemd service/timer
-    become: True
-    copy: src={{ item }} dest=/etc/systemd/system/{{ item }} owner=root group=root mode=0644
-    with_items:
-      - ldap-groups-sync.service
-      - ldap-groups-sync.timer
-    notify: reload systemd-ldap 
+- name: Create systemd service/timer
+  become: true
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  with_items:
+    - ldap-groups-sync.service
+    - ldap-groups-sync.timer
+  notify: Reload systemd-ldap

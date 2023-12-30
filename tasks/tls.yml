@@ -1,88 +1,100 @@
 ---
-  - name: Set work dir
-    set_fact:
-      workdir: "/tmp/amtls_{{ ansible_hostname }}"
-    changed_when: False
+- name: Set work dir
+  ansible.builtin.set_fact:
+    workdir: "/tmp/amtls_{{ ansible_hostname }}"
+  changed_when: false
 
-  - name: Ensure work dir exists
-    file:
-      dest: "{{ workdir }}"
-      state: directory
-    changed_when: False
-    delegate_to: localhost
+- name: Ensure work dir exists
+  file:
+    dest: "{{ workdir }}"
+    state: directory
+    mode: "0755"
+  changed_when: false
+  delegate_to: localhost
+  check_mode: false
 
-  - name: Handle DH params
-    include: tls-dh.yml
-    with_items:
-      - path: /etc/postfix/dh-2048.pem
-        owner: root
-        group: postfix
-        name: postfix
-        mode: 0644
-
-  - name: Check if SSL certificate exists
-    become: True
-    stat: path=/etc/postfix/server.pem
-    register: certstat
-    changed_when: False
-
-  - name: Copy dummy certificate
-    become: True
-    copy: src={{ item.key }} dest=/etc/postfix/{{ item.value }} owner=postfix group=root mode=0660
-    when: not certstat.stat.exists
-    with_dict:
-      "dummycert.pem": "server.pem"
-      "dummykey.pem": "server.key"
-
-  - name: Extract live certificate
-    become: True
-    when: mailserver_have_cert|bool
-    copy:
-      content: "{{ mailserver_tls_cert }}"
-      dest: "/etc/postfix/server.pem"
-      owner: postfix
+- name: Handle DH params
+  include: tls-dh.yml
+  with_items:
+    - path: /etc/postfix/dh-2048.pem
+      owner: root
       group: postfix
-      mode: 0660
+      name: postfix
+      mode: 0644
 
-  - name: Extract live certificate key
-    become: True
-    when: mailserver_have_cert|bool
-    copy:
-      content: "{{ mailserver_tls_key }}"
-      dest: "/etc/postfix/server.key"
-      owner: postfix
-      group: postfix
-      mode: 0660
+- name: Check if SSL certificate exists
+  become: true
+  ansible.builtin.stat:
+    path: /etc/postfix/server.pem
+  register: certstat
+  changed_when: false
 
-  - name: Check if SSL client certificate exists
-    become: True
-    stat:
-      path: "/etc/postfix/{{ ansible_hostname }}.pem"
-    register: ccertstat
-    changed_when: False
+- name: Copy dummy certificate
+  become: true
+  ansible.builtin.copy:
+    src: "{{ item.key }}"
+    dest: "/etc/postfix/{{ item.value }}"
+    owner: postfix
+    group: root
+    mode: "0660"
+  when: not certstat.stat.exists
+  with_dict:
+    "dummycert.pem": "server.pem"
+    "dummykey.pem": "server.key"
 
-  - name: Generate self-signed client certificate
-    command: openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ansible_hostname}}.key -out {{ workdir }}/{{ansible_hostname}}.pem -days 3650 -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ansible_fqdn}}'
-    delegate_to: localhost
-    check_mode: False
-    when: not ccertstat.stat.exists
+- name: Extract live certificate
+  become: true
+  when: mailserver_have_cert|bool
+  ansible.builtin.copy:
+    content: "{{ mailserver_tls_cert }}"
+    dest: "/etc/postfix/server.pem"
+    owner: postfix
+    group: postfix
+    mode: "0660"
 
-  - name: Copy client certificate
-    become: True
-    copy:
-      src: "{{ workdir }}/{{ ansible_hostname }}.{{ item }}"
-      dest: "/etc/postfix/{{ ansible_hostname}}.{{ item }}"
-      owner: postfix
-      group: root
-      mode: 0660
-    when: not ccertstat.stat.exists
-    with_items:
-      - 'key'
-      - 'pem'
+- name: Extract live certificate key
+  become: true
+  when: mailserver_have_cert|bool
+  ansible.builtin.copy:
+    content: "{{ mailserver_tls_key }}"
+    dest: "/etc/postfix/server.key"
+    owner: postfix
+    group: postfix
+    mode: "0660"
 
-  - name: Cleanup
-    file:
-      dest: "{{ workdir }}"
-      state: absent
-    changed_when: False
-    delegate_to: localhost
+- name: Check if SSL client certificate exists
+  become: true
+  ansible.builtin.stat:
+    path: "/etc/postfix/{{ ansible_hostname }}.pem"
+  register: ccertstat
+  changed_when: false
+
+- name: Generate self-signed client certificate
+  ansible.builtin.command: >-
+    openssl req -x509 -sha384 -newkey rsa:4096 -keyout {{ workdir }}/{{ ansible_hostname }}.key
+    -out {{ workdir }}/{{ ansible_hostname }}.pem -days 3650
+    -config {{ role_path }}/files/clientcert.cnf -nodes -subj '/CN={{ ansible_fqdn }}'
+  delegate_to: localhost
+  check_mode: false
+  changed_when: false
+  when: not ccertstat.stat.exists
+
+- name: Copy client certificate
+  become: true
+  ansible.builtin.copy:
+    src: "{{ workdir }}/{{ ansible_hostname }}.{{ item }}"
+    dest: "/etc/postfix/{{ ansible_hostname }}.{{ item }}"
+    owner: postfix
+    group: root
+    mode: "0660"
+  when: not ccertstat.stat.exists
+  with_items:
+    - 'key'
+    - 'pem'
+
+- name: Cleanup
+  ansible.builtin.file:
+    dest: "{{ workdir }}"
+    state: absent
+  changed_when: false
+  delegate_to: localhost
